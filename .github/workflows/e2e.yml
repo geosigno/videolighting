@@ -14,10 +14,22 @@ permissions:
 
 jobs:
   e2e:
-    # Chromium, Firefox and WebKit (the engine of Safari), one test at a time.
-    # The runner has no GPU: the time budgets are scaled (see test/end-to-end/budgets.ts).
-    runs-on: ubuntu-latest
+    # Chromium and Firefox on Linux, WebKit (the engine of Safari) on macOS: the
+    # Linux build of WebKit is not the one that ships. One test at a time.
+    # The runners have no GPU: the time budgets are scaled (see test/end-to-end/budgets.ts).
+    name: e2e (${{ matrix.browsers }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            browsers: chromium firefox
+            projects: --project=chromium --project=firefox
+          - os: macos-latest
+            browsers: webkit
+            projects: --project=webkit
     steps:
       - uses: actions/checkout@v7
 
@@ -29,23 +41,17 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Cache browsers
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-
       - name: Install browsers
-        run: bunx playwright install --with-deps chromium firefox webkit
+        run: bunx playwright install --with-deps ${{ matrix.browsers }}
 
       - name: End-to-end tests
-        run: bun run test:e2e
+        run: bun run test:e2e ${{ matrix.projects }}
 
       - name: Keep the report
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.os }}
           path: |
             playwright-report
             test-results
