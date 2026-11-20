@@ -7,7 +7,16 @@ export default defineConfig({
   // One test at a time: the time budgets mean nothing if tests compete for the CPU.
   fullyParallel: false,
   projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    {
+      name: "chromium",
+      use: {
+        ...devices["Desktop Chrome"],
+        // A Chromium flag: WebKit on Linux refuses to start with it.
+        launchOptions: {
+          args: ["--autoplay-policy=no-user-gesture-required"],
+        },
+      },
+    },
     // `adaptive` slows the CPU through Chromium's DevTools protocol.
     {
       name: "firefox",
@@ -28,9 +37,6 @@ export default defineConfig({
   timeout: 60_000,
   use: {
     baseURL: `http://localhost:${PORT}`,
-    launchOptions: {
-      args: ["--autoplay-policy=no-user-gesture-required"],
-    },
   },
   webServer: {
     command: `bunx vite test/end-to-end --port ${PORT} --strictPort`,

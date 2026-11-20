@@ -83,7 +83,8 @@ test.describe("core", () => {
     });
     expect(width).toBe((2160 * 16) / 9);
     const steady = samples.slice(WARM_UP);
-    expect(steady.length).toBeGreaterThan(10);
+    // A runner without a GPU decodes 4K at a few frames a second: a handful is enough for a median.
+    expect(steady.length).toBeGreaterThan(5);
     const latency = median(steady.map((s) => s.cost.latencyMs));
     const mainThread = mean(steady.map((s) => s.cost.mainMs));
     test.info().annotations.push(
