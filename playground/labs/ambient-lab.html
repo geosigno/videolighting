@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Glow ambient lab</title>
+    <link href="/base.css" rel="stylesheet">
+  </head>
+  <body>
+    <header class="al-head">
+      <h1>Ambient: other ways to make the background</h1>
+      <p>
+        One video, one read, every variant fed by the same colours. No
+        saturation anywhere. Throwaway lab: the library's default is unchanged.
+        The cost shown is the main-thread time of the variant's own update, not
+        its painting: for that, show one variant alone and read the metrics of
+        the playground.
+      </p>
+      <div class="al-controls">
+        <label
+          >source
+          <select id="source">
+            <option value="mux">Video.js demo (Mux)</option>
+            <option value="/mire.mp4">mire</option>
+            <option value="/static.mp4">static edges</option>
+            <option value="/detail.mp4">detail</option>
+          </select>
+        </label>
+        <label
+          >show
+          <select id="solo"></select>
+        </label>
+        <label class="al-compare-only"
+          ><input id="freeze" type="checkbox">
+          freeze the drift (to compare a still frame)</label
+        >
+      </div>
+    </header>
+    <main class="al-main">
+      <video autoplay controls id="video" loop muted playsinline></video>
+      <div class="al-grid" id="grid"></div>
+    </main>
+    <script src="./ambient-lab.ts" type="module"></script>
+  </body>
+</html>

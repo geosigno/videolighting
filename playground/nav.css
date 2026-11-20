@@ -1,0 +1,30 @@
+.glow-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  align-items: baseline;
+  padding: 10px var(--gutter);
+  font:
+    14px / 1.5 system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+  color: var(--muted);
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+.glow-nav a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.glow-nav a:hover,
+.glow-nav a:focus-visible {
+  text-decoration: underline;
+}
+.glow-nav a[aria-current="page"] {
+  font-weight: 600;
+  color: #fff;
+}
+.glow-nav-answers {
+  margin-left: auto;
+}

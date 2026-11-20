@@ -1,0 +1,179 @@
+.pg-head {
+  padding: 24px 24px 0;
+}
+.pg-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+.pg-aspects {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+.pg-aspects legend {
+  float: left;
+  padding: 0 4px 0 0;
+}
+.pg-aspects button {
+  padding: 2px 8px;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: #1c1c24;
+  border: 1px solid #2a2a34;
+  border-radius: 6px;
+}
+.pg-aspects button[aria-pressed="true"] {
+  color: #fff;
+  background: #3b3b52;
+  border-color: #6a6a8a;
+}
+.pg-controls details {
+  position: relative;
+}
+.pg-flag {
+  display: inline-block;
+  padding: 2px 10px;
+  margin: 10px 0 0;
+  color: #f0c27a;
+  background: #3a2a10;
+  border-radius: 99px;
+}
+.pg-flag a {
+  color: inherit;
+}
+.pg-stage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+  padding: 0 24px 24px;
+}
+/* Full-window backdrop the ambient fills. */
+.pg-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+}
+/* The frame wraps the resizable container; the halo glows around it. */
+.pg-frame {
+  position: relative;
+  display: inline-block;
+  margin: 150px;
+}
+.pg-fill {
+  position: absolute;
+  inset: 0;
+}
+.pg-container {
+  position: relative;
+  width: 480px;
+  min-width: 120px;
+  height: 270px;
+  min-height: 80px;
+  overflow: hidden;
+  resize: both;
+  background: #000;
+}
+/* Positioned, so it paints above the letterbox layer before it. */
+.pg-container video {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.pg-card {
+  width: 280px;
+  padding: 14px;
+  margin-top: 24px;
+  background: #15151c;
+  border: 1px solid #2a2a34;
+  border-radius: 12px;
+}
+.pg-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.pg-btn {
+  padding: 8px 14px;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  border: 0;
+  border-radius: 8px;
+}
+.pg-btn.primary,
+.pg-badge {
+  background: var(--video-primary, #555568);
+}
+.pg-btn.secondary {
+  background: var(--video-secondary, #3c3c4c);
+}
+.pg-badge {
+  padding: 3px 8px;
+  font: 700 11px system-ui;
+  color: #fff;
+  border-radius: 99px;
+}
+/* Opaque, fixed size and contained: its 2 Hz writes stay inside it. */
+.pg-metrics {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+  width: 360px;
+  height: 184px;
+  padding: 10px 12px;
+  margin: 0;
+  contain: strict;
+  font-size: 12px;
+  background: #15151c;
+  border: 1px solid #2a2a34;
+  border-radius: 10px;
+}
+.pg-metrics dt {
+  color: #9a9aa8;
+}
+.pg-metrics dd {
+  margin: 0;
+  font:
+    500 14px ui-monospace,
+    monospace;
+  font-variant-numeric: tabular-nums;
+}
+/* Test-only fixtures, collapsed. */
+.pg-checks {
+  padding: 0 24px 24px;
+}
+.pg-checks button {
+  margin: 4px 8px 4px 0;
+}
+.pg-checks label {
+  display: block;
+}
+.pg-swatch {
+  width: 48px;
+  height: 24px;
+  border-radius: 6px;
+}
+.pg-child-halo {
+  position: relative;
+  width: 160px;
+  margin: 24px;
+}
+.pg-child-halo video {
+  position: relative;
+  display: block;
+  width: 100%;
+}

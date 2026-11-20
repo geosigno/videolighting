@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Glow labs</title>
+    <link href="/base.css" rel="stylesheet">
+  </head>
+  <body>
+    <header class="top">
+      <div>
+        <h1>Glow labs</h1>
+        <p>
+          Throwaway experiments on top of the library: what else can the colours
+          of a video drive? Everything lives in <code>playground/labs</code>;
+          nothing here touches <code>src/</code> or the demo. Side labs:
+          <a href="/labs/ambient-lab.html">ambient variants</a>,
+          <a href="/labs/halo.html">halo curves</a>.
+        </p>
+      </div>
+    </header>
+    <div class="layout">
+      <aside class="player">
+        <video autoplay controls id="video" loop muted playsinline></video>
+        <div class="controls">
+          <label
+            >source
+            <select id="source">
+              <option value="mux">Video.js demo (Mux)</option>
+              <option value="/mire.mp4">mire</option>
+              <option value="/labs/strobe.mp4">strobe (flash test)</option>
+            </select>
+          </label>
+          <label>file <input accept="video/*" id="file" type="file"></label>
+          <label
+            ><input id="page-ambient" type="checkbox">
+            background for the whole page</label
+          >
+        </div>
+      </aside>
+      <main id="labs"></main>
+    </div>
+    <script src="./main.ts" type="module"></script>
+  </body>
+</html>

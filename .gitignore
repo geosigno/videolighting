@@ -1,0 +1,18 @@
+dist
+node_modules
+.superpowers
+docs/superpowers
+*.tgz
+.DS_Store
+playground/public/*.mp4
+.traces
+playground/public/compat/
+playwright-report
+test-results
+# Hors dépôt : vidéos, projet vidéo, rapports, notes de recherche, config locale
+video/
+reports/
+research_notes/
+.claude/
+playground/public/*.webm
+playground/public/labs/*.mp4

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Glow — benchmark CSS</title>
+    <link href="/base.css" rel="stylesheet">
+    <style>
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin: 12px 0;
+    }
+    #progress {
+      color: #90caf9;
+    }
+    #preview {
+      padding: 150px 150px 150px 150px;
+    }
+    #player {
+      width: min(480px, 100%);
+    }
+    #player video {
+      display: block;
+      width: 100%;
+      background: #000;
+    }
+    #lab {
+      position: relative;
+      width: 480px;
+      max-width: 100%;
+      height: 270px;
+      margin: 150px 0;
+      background: #333;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    td.ok {
+      color: #69f0ae;
+    }
+    td.ko {
+      color: #ff8a65;
+    }
+    .small {
+      font-size: 11px;
+      color: #888;
+    }
+    textarea {
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 180px;
+      margin-top: 16px;
+      font:
+        12px / 1.4 ui-monospace,
+        monospace;
+      color: #ddd;
+      background: var(--panel);
+      border: 1px solid #333;
+    }
+    </style>
+  </head>
+  <body class="glow-page">
+    <h1>Benchmark CSS du glow</h1>
+    <p>
+      Regarde d'abord le rendu de chaque variante dans l'aperçu. Puis
+      <strong>Mesurer</strong>
+      empile 24 puis 48 glows sur une même boîte, couleurs changeant à chaque
+      frame, et regarde si la page garde son débit d'images. Chaque variante est
+      mesurée 3 fois dans un ordre qui tourne : un palier n'est tenu (✓) que si
+      les 3 tours le tiennent, et les écarts min-max sont affichés. Les
+      variantes « sans masques », « sans coins », « will-change » et « contain »
+      servent à savoir ce qui coûte. Compte une trentaine de secondes. Prérequis
+      : <code>bun run dev</code> (ou
+      <code>dev:lan</code>
+      sur un téléphone).
+    </p>
+    <div class="controls">
+      <label>aperçu <select id="variant"></select></label>
+      <button id="run" type="button">Mesurer la capacité</button>
+      <button id="copy" type="button">Copier le rapport</button>
+      <span id="progress"></span>
+    </div>
+    <div id="preview">
+      <div id="player">
+        <video autoplay controls id="video" loop muted playsinline></video>
+      </div>
+    </div>
+    <div class="small" id="baseline"></div>
+    <table>
+      <thead>
+        <tr id="results-head"></tr>
+      </thead>
+      <tbody id="results"></tbody>
+    </table>
+    <div id="lab"></div>
+    <textarea id="report" readonly></textarea>
+    <script src="./css-bench.ts" type="module"></script>
+  </body>
+</html>

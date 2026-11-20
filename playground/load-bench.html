@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Glow — flux complet sous charge</title>
+    <link href="/base.css" rel="stylesheet">
+    <style>
+    #player {
+      width: min(480px, 100%);
+      margin: 100px;
+    }
+    #player video {
+      display: block;
+      width: 100%;
+    }
+    </style>
+  </head>
+  <body class="glow-page">
+    <h1>Glow — flux complet sous charge</h1>
+    <p>
+      Vrai pipeline (watchVideo + createGlow). Paramètres d'URL :
+      <code>src</code>
+      (mire.mp4, mire60.mp4, mire120.mp4, static.mp4),
+      <code>engine</code>
+      (worker | main), <code>glows</code>,
+      <code>seconds</code>, <code>rounds</code>, <code>load</code> et
+      <code>every</code>
+      (blocage du thread, ms), <code>skipSame=1</code>
+      (n'écrit pas si les couleurs sont identiques), <code>offscreen=1</code>
+      (vidéo hors de l'écran). Le ralentissement CPU se règle dans DevTools.
+    </p>
+    <button id="run" type="button">Mesurer</button>
+    <span id="progress"></span>
+    <div id="spacer"></div>
+    <div id="player">
+      <video autoplay id="video" loop muted playsinline></video>
+    </div>
+    <table>
+      <thead>
+        <tr id="head"></tr>
+      </thead>
+      <tbody id="results"></tbody>
+    </table>
+    <textarea cols="100" id="report" readonly rows="10"></textarea>
+    <script src="./load-bench.ts" type="module"></script>
+  </body>
+</html>

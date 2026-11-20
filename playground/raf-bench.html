@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Glow — benchmark requestAnimationFrame</title>
+    <link href="/base.css" rel="stylesheet">
+    <style>
+    #player {
+      width: min(480px, 100%);
+      margin: 100px;
+    }
+    #player video {
+      display: block;
+      width: 100%;
+    }
+    </style>
+  </head>
+  <body class="glow-page">
+    <h1>Glow — écriture directe ou regroupée par requestAnimationFrame</h1>
+    <p>
+      Compare deux façons d'appliquer les couleurs : écrire le style dès que
+      l'échantillon arrive, ou garder la dernière valeur et l'écrire une seule
+      fois par image dans un requestAnimationFrame. Chaque mode est mesuré
+      plusieurs fois, en alternance, sur le vrai pipeline (Worker + VideoFrame).
+      Paramètres d'URL :
+      <code>?src=mire60.mp4&amp;glows=1&amp;rounds=3&amp;seconds=6</code>.
+    </p>
+    <button id="run" type="button">Mesurer</button>
+    <span id="progress"></span>
+    <div id="player">
+      <video autoplay id="video" loop muted playsinline></video>
+    </div>
+    <table>
+      <thead>
+        <tr id="head"></tr>
+      </thead>
+      <tbody id="results"></tbody>
+    </table>
+    <textarea cols="100" id="report" readonly rows="10"></textarea>
+    <script src="./raf-bench.ts" type="module"></script>
+  </body>
+</html>

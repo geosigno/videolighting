@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Glow — matrice de compatibilité</title>
+    <link href="/base.css" rel="stylesheet">
+    <style>
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin: 16px 0;
+    }
+    #env {
+      padding: 12px;
+      margin: 0 0 16px;
+      overflow-x: auto;
+      background: var(--panel);
+      border-radius: 4px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    tr.group td {
+      padding-top: 20px;
+      font-weight: bold;
+      color: #fff;
+      border-bottom: 1px solid #444;
+    }
+    .title {
+      font-weight: bold;
+    }
+    .small {
+      font-size: 12px;
+      color: #888;
+    }
+    .slot video {
+      display: block;
+      width: 160px;
+      margin-top: 6px;
+      background: #000;
+    }
+    .badge.readable {
+      color: #6fdc8c;
+    }
+    .badge.blocked {
+      color: #ff8a65;
+    }
+    .badge.noplay,
+    .badge.error,
+    .badge.timeout {
+      color: #ffd54f;
+    }
+    .badge.black {
+      color: #bbb;
+    }
+    .strip {
+      display: flex;
+      width: 120px;
+      height: 12px;
+      margin-top: 4px;
+    }
+    .strip span {
+      flex: 1;
+    }
+    .verdict.match {
+      color: #6fdc8c;
+    }
+    .verdict.mismatch {
+      font-weight: bold;
+      color: #ff5252;
+    }
+    .verdict.observe {
+      color: #90caf9;
+    }
+    .verdict.skipped {
+      color: #888;
+    }
+    textarea {
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 160px;
+      margin-top: 24px;
+      font:
+        12px / 1.4 ui-monospace,
+        monospace;
+      color: #ddd;
+      background: var(--panel);
+      border: 1px solid #333;
+    }
+    </style>
+  </head>
+  <body class="glow-page">
+    <h1>Matrice de compatibilité</h1>
+    <p>
+      Chaque ligne charge une source vidéo différente, demande des couleurs à la
+      vraie librairie (moteur thread principal puis Worker) et compare au
+      résultat attendu <strong>dans Chrome</strong>. Les lignes « à observer »
+      n'ont pas d'attendu : c'est ce qu'on veut découvrir. Les « autres origines
+      » sont les serveurs de <code>bun run servers</code>
+      (ports 5200, 5201, 5202). Pour tester sur un autre appareil : lancer
+      <code>HOST=0.0.0.0 bun run servers</code>, puis ouvrir cette page par
+      l'adresse IP de la machine.
+    </p>
+    <div class="controls">
+      <button id="run-all" type="button">Tout lancer</button>
+      <button id="copy" type="button">Copier le rapport</button>
+    </div>
+    <pre id="env">détection…</pre>
+    <table id="matrix">
+      <thead>
+        <tr>
+          <th>Cas</th>
+          <th>Attendu (Chrome)</th>
+          <th>Thread principal</th>
+          <th>Worker</th>
+          <th>Verdict</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <textarea id="report" readonly></textarea>
+    <script src="./compat.ts" type="module"></script>
+  </body>
+</html>

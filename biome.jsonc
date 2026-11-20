@@ -1,0 +1,30 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "extends": ["ultracite/biome/core", "ultracite/biome/vitest"],
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true,
+    "defaultBranch": "master"
+  },
+  "files": { "includes": ["!**/.claude"] },
+  "overrides": [
+    {
+      // Throwaway experiments: modern CSS (@property, ::selection) and long
+      // functions are fine there.
+      "includes": ["playground/labs/**"],
+      "linter": {
+        "rules": {
+          "complexity": { "noExcessiveCognitiveComplexity": "off" },
+          "style": { "noDescendingSpecificity": "off" },
+          "suspicious": { "useBaseline": "off" }
+        }
+      }
+    },
+    {
+      // The reference page's resizable container (`resize`).
+      "includes": ["playground/page/**/*.css"],
+      "linter": { "rules": { "suspicious": { "useBaseline": "off" } } }
+    }
+  ]
+}

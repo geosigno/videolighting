@@ -1,0 +1,99 @@
+.al-head {
+  padding: 24px 24px 8px;
+}
+.al-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+.al-head p {
+  max-width: 900px;
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+.al-main {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+  padding: 12px 24px 48px;
+}
+.al-main video {
+  width: 100%;
+  background: #000;
+  border-radius: 8px;
+}
+.al-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 16px;
+}
+.al-tile {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #101018;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  isolation: isolate;
+}
+.al-item {
+  margin: 0;
+}
+.al-label {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 8px 4px 0;
+}
+.al-label b {
+  font-weight: 600;
+}
+.al-label span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.al-label output {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.al-solo .al-grid {
+  grid-template-columns: minmax(0, 900px);
+}
+.al-blob {
+  position: absolute;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  mask-image: radial-gradient(closest-side, #000, transparent);
+}
+.al-side {
+  position: absolute;
+}
+.al-mosaic {
+  position: absolute;
+  inset: -20%;
+  display: grid;
+  filter: blur(36px);
+}
+.al-drift {
+  position: absolute;
+  inset: -60%;
+}
+.al-compare-only {
+  display: none;
+}
+.al-compare .al-compare-only {
+  display: inline;
+}
+.al-compare .al-main {
+  grid-template-columns: minmax(0, 1fr);
+}
+.al-compare .al-main video {
+  width: 320px;
+}
+.al-compare .al-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}

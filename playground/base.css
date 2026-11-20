@@ -1,0 +1,89 @@
+/* The look every playground page shares: tokens, body, headings, page gutter. */
+:root {
+  --bg: #0c0c11;
+  --ink: #e8e8ee;
+  --muted: #9a9aa8;
+  --line: #2a2a34;
+  --panel: #15151c;
+  --control: #1c1c24;
+  --control-line: #3a3a48;
+  --accent: #9db4ff;
+  --gutter: 24px;
+  color-scheme: dark;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font:
+    14px / 1.5 system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+}
+h1 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+code,
+pre {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+
+/* Measurement pages (`<body class="glow-page">`): a gutter and the shared controls. */
+.glow-page {
+  padding: 0 var(--gutter) var(--gutter);
+}
+.glow-page .glow-nav {
+  margin: 0 calc(var(--gutter) * -1) var(--gutter);
+}
+.glow-page p {
+  max-width: 900px;
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+.glow-page button,
+.glow-page select {
+  padding: 6px 12px;
+  font: inherit;
+  color: var(--ink);
+  background: var(--control);
+  border: 1px solid var(--control-line);
+  border-radius: 6px;
+}
+.glow-page button {
+  cursor: pointer;
+}
+.glow-page button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.glow-page table {
+  border-collapse: collapse;
+}
+.glow-page th,
+.glow-page td {
+  padding: 6px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+.glow-page th {
+  font-weight: 600;
+  color: var(--muted);
+}
+.glow-page pre,
+.glow-page textarea {
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.glow-page pre {
+  padding: 12px;
+  margin: 0 0 16px;
+  overflow-x: auto;
+}
