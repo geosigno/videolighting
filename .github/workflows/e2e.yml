@@ -4,7 +4,9 @@ on:
   push:
     branches: [ master ]
   pull_request:
-  # Firefox and WebKit: run by hand (Actions tab) before a release.
+  # WebKit: every night, and by hand (Actions tab).
+  schedule:
+    - cron: "0 3 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -18,49 +20,15 @@ permissions:
 # frame rate, time budgets) mean nothing there and are left out. Run them on a
 # real machine with `bun run test:e2e`.
 jobs:
-  chromium:
+  e2e:
+    if: github.event_name != 'schedule'
+    name: e2e (${{ matrix.browser }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.4.4
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Install browser
-        run: bunx playwright install --with-deps chromium
-
-      - name: End-to-end tests (Chromium)
-        run: bun run test:e2e --project=chromium --grep-invert @perf
-
-      - name: Keep the report
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report-chromium
-          path: |
-            playwright-report
-            test-results
-          retention-days: 7
-
-  # WebKit (the engine of Safari) on macOS: the Linux build is not the one that ships.
-  cross-browser:
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-latest
-            browser: firefox
-          - os: macos-latest
-            browser: webkit
+        browser: [ chromium, firefox ]
     steps:
       - uses: actions/checkout@v7
 
@@ -83,6 +51,39 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report-${{ matrix.browser }}
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+
+  # WebKit (the engine of Safari) on macOS: the Linux build is not the one that ships.
+  # Slow (about 12 minutes) and not stable yet: by hand and every night, not on each push.
+  webkit:
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Install browser
+        run: bunx playwright install webkit
+
+      - name: End-to-end tests (webkit)
+        run: bun run test:e2e --project=webkit --grep-invert @perf
+
+      - name: Keep the report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-webkit
           path: |
             playwright-report
             test-results

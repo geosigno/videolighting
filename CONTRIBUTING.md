@@ -34,8 +34,8 @@ Few tests, all meaningful. End-to-end tests come first: a unit test exists only 
 end-to-end test cannot cover the behaviour. Everything lives under `test/`.
 
 Tests of speed (frame rate, time budgets) are tagged `@perf`. A shared CI runner has no GPU, so the
-CI leaves them out and runs Chromium only; run everything on the three engines on your machine with
-`bun run test:e2e` (Firefox and WebKit can also be run from the Actions tab, "E2E", without `@perf`).
+CI leaves them out and runs Chromium and Firefox; run everything on the three engines on your machine with
+`bun run test:e2e` (Firefox runs in the CI too; WebKit runs every night and from the Actions tab, "E2E").
 
 ## Releasing
 

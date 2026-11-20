@@ -75,8 +75,24 @@ export async function open(
   { ready = true }: { ready?: boolean } = {}
 ) {
   const search = typeof query === "string" ? query : pageQuery(query);
+  const problems: string[] = [];
+  page.on("pageerror", (error) => problems.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      problems.push(message.text());
+    }
+  });
   await page.goto(`/page.html${search}`);
-  await page.waitForFunction(() => Boolean(window.glowPage));
+  try {
+    await page.waitForFunction(() => Boolean(window.glowPage), undefined, {
+      timeout: 30_000,
+    });
+  } catch (error) {
+    throw new Error(
+      `the page did not start (${problems.join(" | ") || "no error on the page"})`,
+      { cause: error }
+    );
+  }
   if (ready) {
     await page.evaluate(() => window.glowPage?.ready());
   }
