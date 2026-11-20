@@ -1,7 +1,7 @@
 {
-  "name": "videolight",
-  "version": "0.1.0-alpha.0",
-  "description": "Read the colours along the edges of a <video> and use them: halo, ambient background, theme variables, letterbox fill.",
+  "name": "videolighting",
+  "version": "1.0.0",
+  "description": "Read the colours along the edges of a <video> and use them: halo, ambient background, theme variables.",
   "keywords": [
     "video",
     "ambient",
@@ -10,10 +10,22 @@
     "glow",
     "colors",
     "react",
-    "canvas"
+    "canvas",
+    "ambient-light",
+    "video-lighting",
+    "theme",
+    "typescript"
   ],
+  "homepage": "https://videolighting.geosigno.fr/",
+  "bugs": {
+    "url": "https://github.com/geosigno/videolighting/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/geosigno/videolighting.git"
+  },
   "license": "MIT",
-  "author": "Geoffrey Signorato",
+  "author": "Geoffrey Signorato <geoffrey.signorato@gmail.com>",
   "sideEffects": false,
   "type": "module",
   "exports": {
@@ -42,9 +54,10 @@
     "lint:pkg": "publint && attw --pack . --profile esm-only",
     "prepack": "bun run build",
     "prepare": "lefthook install",
+    "prepublishOnly": "bun run build && bun run lint:pkg",
     "servers": "bun playground/servers.ts",
     "servers:lan": "HOST=0.0.0.0 bun playground/servers.ts",
-    "test": "bun test src playground",
+    "test": "bun test test/unit",
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit"
   },
@@ -73,5 +86,9 @@
     "react": {
       "optional": true
     }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

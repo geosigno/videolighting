@@ -15,7 +15,7 @@ permissions:
 jobs:
   e2e:
     # Chromium, Firefox and WebKit (the engine of Safari), one test at a time.
-    # The runner has no GPU: the time budgets are scaled (see e2e/budgets.ts).
+    # The runner has no GPU: the time budgets are scaled (see test/end-to-end/budgets.ts).
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -24,7 +24,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.4.4
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
