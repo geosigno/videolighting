@@ -37,5 +37,13 @@ jobs:
 
       # `npm publish` déclenche `prepublishOnly` (build + publint + attw),
       # puis publie avec provenance (via publishConfig) sans token grâce à l'OIDC.
+      # The first version of a package is published by hand (trusted publishing needs the
+      # package to exist): do nothing if this version is already on npm.
       - name: Publish to npm
-        run: npm publish
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if npm view "videolighting@$version" version > /dev/null 2>&1; then
+            echo "videolighting@$version is already on npm"
+          else
+            npm publish
+          fi
