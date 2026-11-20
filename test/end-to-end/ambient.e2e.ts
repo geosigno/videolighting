@@ -132,7 +132,7 @@ test.describe("ambient", () => {
   });
 
   // Timed by the video's own clock from the start: not waiting for the read first.
-  test("writes only when the picture changes", async ({ page }) => {
+  test("writes only when the picture changes @perf", async ({ page }) => {
     await open(
       page,
       { effects: ["ambient"], src: "/shift-360.webm" },

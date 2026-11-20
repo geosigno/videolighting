@@ -4,6 +4,8 @@ on:
   push:
     branches: [ master ]
   pull_request:
+  # Firefox and WebKit: run by hand (Actions tab) before a release.
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -12,24 +14,13 @@ concurrency:
 permissions:
   contents: read
 
+# A shared runner has no GPU and a busy CPU: the tests of speed (tagged `@perf`:
+# frame rate, time budgets) mean nothing there and are left out. Run them on a
+# real machine with `bun run test:e2e`.
 jobs:
-  e2e:
-    # Chromium and Firefox on Linux, WebKit (the engine of Safari) on macOS: the
-    # Linux build of WebKit is not the one that ships. One test at a time.
-    # The runners have no GPU: the time budgets are scaled (see test/end-to-end/budgets.ts).
-    name: e2e (${{ matrix.browsers }})
-    runs-on: ${{ matrix.os }}
+  chromium:
+    runs-on: ubuntu-latest
     timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            browsers: chromium firefox
-            projects: --project=chromium --project=firefox
-          - os: macos-latest
-            browsers: webkit
-            projects: --project=webkit
     steps:
       - uses: actions/checkout@v7
 
@@ -41,17 +32,57 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Install browsers
-        run: bunx playwright install --with-deps ${{ matrix.browsers }}
+      - name: Install browser
+        run: bunx playwright install --with-deps chromium
 
-      - name: End-to-end tests
-        run: bun run test:e2e ${{ matrix.projects }}
+      - name: End-to-end tests (Chromium)
+        run: bun run test:e2e --project=chromium --grep-invert @perf
 
       - name: Keep the report
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report-${{ matrix.os }}
+          name: playwright-report-chromium
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+
+  # WebKit (the engine of Safari) on macOS: the Linux build is not the one that ships.
+  cross-browser:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            browser: firefox
+          - os: macos-latest
+            browser: webkit
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Install browser
+        run: bunx playwright install --with-deps ${{ matrix.browser }}
+
+      - name: End-to-end tests (${{ matrix.browser }})
+        run: bun run test:e2e --project=${{ matrix.browser }} --grep-invert @perf
+
+      - name: Keep the report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.browser }}
           path: |
             playwright-report
             test-results

@@ -65,7 +65,7 @@ test.describe("core", () => {
     expectColor(side(after as Sample, "top"), YELLOW);
   });
 
-  test("reads every frame of a 25 fps video", async ({ page }) => {
+  test("reads every frame of a 25 fps video @perf", async ({ page }) => {
     const { samples } = await runCore(page, { ms: 3000, src: clip(360) });
     const seconds = ((samples.at(-1)?.at ?? 0) - (samples[0]?.at ?? 0)) / 1000;
     const rate = (samples.length - 1) / seconds;
@@ -76,7 +76,7 @@ test.describe("core", () => {
     expect(rate).toBeGreaterThan(FPS * 0.8);
   });
 
-  test("stays under its time budget at 2160p", async ({ page }) => {
+  test("stays under its time budget at 2160p @perf", async ({ page }) => {
     const { samples, width } = await runCore(page, {
       ms: 3000,
       src: clip(2160),
@@ -144,7 +144,7 @@ for (const forced of ["webgl", "canvas"] as const) {
       );
     });
 
-    test(`delivers every frame and stays under its time budget at ${HEIGHT}p`, async ({
+    test(`delivers every frame and stays under its time budget at ${HEIGHT}p @perf`, async ({
       page,
     }) => {
       await open(page, query);

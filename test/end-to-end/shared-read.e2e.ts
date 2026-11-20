@@ -24,7 +24,7 @@ import {
  */
 
 test.describe("all effects together", () => {
-  test("share one read that delivers every frame", async ({ page }) => {
+  test("share one read that delivers every frame @perf", async ({ page }) => {
     await open(page, { effects: ALL });
     // A full metrics window (3 s) after the first sample.
     await page.waitForTimeout(3500);

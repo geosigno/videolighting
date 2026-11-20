@@ -33,6 +33,16 @@ The CI runs them.
 Few tests, all meaningful. End-to-end tests come first: a unit test exists only where an
 end-to-end test cannot cover the behaviour. Everything lives under `test/`.
 
+Tests of speed (frame rate, time budgets) are tagged `@perf`. A shared CI runner has no GPU, so the
+CI leaves them out and runs Chromium only; run everything on the three engines on your machine with
+`bun run test:e2e` (Firefox and WebKit can also be run from the Actions tab, "E2E", without `@perf`).
+
+## Releasing
+
+1. Run `bun run check`, `bun run typecheck`, `bun run test`, `bun run test:e2e`, `bun run lint:pkg` locally.
+2. Bump `version` in `package.json`, add the entry to `CHANGELOG.md`, commit and push.
+3. Publish a GitHub Release (tag `vX.Y.Z`): the `Release` workflow publishes to npm with provenance.
+
 ## Pull requests
 
 - Branch from `master`.

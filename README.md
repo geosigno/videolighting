@@ -309,6 +309,26 @@ over. The read picks WebGL or a 2D canvas by measuring both on your device (and 
 the video's size changes or the device slows down). If the main thread would spend more than 10 % of its
 time on it (the fallback engine, on a slow device), frames are skipped, never queued.
 
+**Measured** on 2026-11-20, MacBook Pro (Apple M1 Pro, macOS 27.0.1), 25 fps clip, `halo` + `ambient` +
+`theme` running together (`bun run test:e2e`, `core` tests). *Latency* is the median time from a frame
+being requested to its colours being ready; *main thread* is the time the page's main thread spends per sample.
+
+| Browser | Method | Clip | Latency (p50) | Main thread / sample | Frames read |
+| --- | --- | --- | --- | --- | --- |
+| Chrome 157 | auto | 2160p | 3.8 ms | 0.05 ms | |
+| Chrome 157 | WebGL | 1080p | 2.9 ms | 0.06 ms | 25 / 25 fps |
+| Chrome 157 | canvas | 1080p | 6.0 ms | 0.05 ms | 25 / 25 fps |
+| Firefox (Playwright build) | auto | 2160p | 11.0 ms | 4.83 ms | |
+| Firefox (Playwright build) | WebGL | 1080p | 9.0 ms | 1.29 ms | 25 / 25 fps |
+| Firefox (Playwright build) | canvas | 1080p | 3.0 ms | 1.34 ms | 25 / 25 fps |
+| WebKit (Playwright build) | auto | 2160p | 3.0 ms | 0.11 ms | |
+| WebKit (Playwright build) | WebGL | 1080p | 2.0 ms | 0.01 ms | 25 / 25 fps |
+| WebKit (Playwright build) | canvas | 1080p | 12.0 ms | 0.13 ms | 25 / 25 fps |
+
+Firefox creates the `VideoFrame` on the main thread, which is why its main-thread cost is higher; Firefox and
+Safari round timers to 1 ms, so their figures are coarse. These are one machine's figures, not a promise:
+run `bun run test:e2e` on yours.
+
 ### Fallbacks
 
 | Situation | What happens |
