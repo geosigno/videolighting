@@ -1,14 +1,13 @@
 import { describe, expect, test as it } from "bun:test";
 import { renderToString } from "react-dom/server";
-import { NEUTRAL } from "../core/watcher.js";
+import { NEUTRAL } from "../../src/core/watcher.js";
 import {
   Ambient,
-  GlowProvider,
   Halo,
-  Letterbox,
+  LightingProvider,
   Theme,
   useColors,
-} from "./index.js";
+} from "../../src/react/index.js";
 
 function ColorsProbe() {
   const colors = useColors(null);
@@ -16,14 +15,12 @@ function ColorsProbe() {
 }
 
 describe("server rendering", () => {
-  it("no DOM global is defined in this test", () => {
+  it("the three components render their element, className and children", () => {
+    // The point is rendering without a DOM: none must exist here.
     expect(typeof document).toBe("undefined");
     expect(typeof window).toBe("undefined");
-  });
-
-  it("the four components render their element, className and children", () => {
     const html = renderToString(
-      <GlowProvider options={{ method: "canvas" }} video={null}>
+      <LightingProvider options={{ method: "canvas" }} video={null}>
         <Halo className="halo">
           <video muted />
         </Halo>
@@ -31,13 +28,11 @@ describe("server rendering", () => {
         <Theme as="aside" className="theme">
           texte
         </Theme>
-        <Letterbox className="letterbox" />
-      </GlowProvider>
+      </LightingProvider>
     );
     expect(html).toContain('<div class="halo"><video muted=""></video></div>');
     expect(html).toContain('<section class="ambient"></section>');
     expect(html).toContain('<aside class="theme">texte</aside>');
-    expect(html).toContain('<div class="letterbox"></div>');
   });
 
   it("useColors renders NEUTRAL on the server", () => {

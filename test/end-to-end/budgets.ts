@@ -9,8 +9,7 @@
  *   Firefox        3.0    5.0   13.0         Firefox       1.59   3.36   6.94
  *   WebKit         2.0    2.0    3.0         WebKit        0.18   0.10   0.05
  *
- * A CI runner has no GPU and shares its CPU: `budgets.ts` multiplies them there.
- * This table is pure (no environment, no Node): a page can import it too.
+ * A CI runner has no GPU and shares its CPU: they are multiplied there (`scale`).
  */
 export const base = {
   /**
@@ -28,3 +27,18 @@ export const base = {
 } as const;
 
 export type Height = keyof typeof base.latencyMs;
+
+/**
+ * The scale of the budgets for where the tests run: a CI runner has no GPU and
+ * shares its CPU, so they are multiplied there. Override with
+ * GLOW_BUDGET_SCALE (e.g. GLOW_BUDGET_SCALE=3 bun run test:e2e).
+ */
+export const scale = Number(
+  process.env.GLOW_BUDGET_SCALE ?? (process.env.CI ? 4 : 1)
+);
+
+export const budget = {
+  latencyMs: (height: Height) => base.latencyMs[height] * scale,
+  mainThreadMs: (height: Height) => base.mainThreadMs[height] * scale,
+  watcherMs: (height: Height) => base.watcherMs[height] * scale,
+};

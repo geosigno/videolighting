@@ -1,4 +1,4 @@
-import { type EdgeColors, type Rgb, watchVideo } from "../../src/index.js";
+import { type EdgeColors, type Rgb, watchVideo } from "../internal.js";
 import { flat, mean, palette } from "./colors.js";
 
 /** What every lab receives for each sampled frame. */

@@ -13,7 +13,6 @@
   "include": [
     "src/**/*",
     "playground/**/*",
-    "e2e/**/*",
     "test/**/*",
     "playwright.config.ts"
   ]

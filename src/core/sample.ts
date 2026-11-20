@@ -1,3 +1,5 @@
+import { vivid } from "./vivid.js";
+
 export type Rgb = [number, number, number];
 
 export interface EdgeColors {
@@ -5,6 +7,8 @@ export interface EdgeColors {
   left: Rgb[];
   right: Rgb[];
   top: Rgb[];
+  /** The two most vivid colours of the whole frame, if it has any. */
+  vivid?: [Rgb, Rgb];
 }
 
 /** Default number of colors read along the longer sides. */
@@ -133,5 +137,6 @@ export function sampleEdges(
     left: alongY(0, depthX),
     right: alongY(width - depthX, width),
     top: alongX(0, depthY),
+    vivid: vivid(data, width, height),
   };
 }

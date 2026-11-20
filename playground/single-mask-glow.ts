@@ -1,5 +1,5 @@
 import { falloffAlpha, type Glow } from "../src/core/glow.js";
-import type { EdgeColors, Rgb } from "../src/index.js";
+import type { EdgeColors, Rgb } from "./internal.js";
 
 /**
  * Experiment: the whole glow on ONE element with ONE mask.
@@ -12,8 +12,8 @@ import type { EdgeColors, Rgb } from "../src/index.js";
  * Per frame: one `backgroundImage` write.
  */
 
-const REACH = "var(--glow-reach, 140px)";
-const OPACITY = "var(--glow-opacity, 0.85)";
+const REACH = "var(--vl-reach, 140px)";
+const OPACITY = "var(--vl-opacity, 0.85)";
 const STEPS = 10;
 const UNDER_VIDEO_PX = 4;
 

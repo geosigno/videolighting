@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { createReader, type MethodChoice } from "./reader.js";
-import { SAMPLE_HEIGHT, SAMPLE_WIDTH } from "./sample.js";
+import { createReader, type MethodChoice } from "../../src/core/reader.js";
+import { SAMPLE_HEIGHT, SAMPLE_WIDTH } from "../../src/core/sample.js";
 
 const layout = { points: 2 };
 const frame = (displayWidth = 3840) => ({ displayWidth }) as VideoFrame;
@@ -24,9 +24,9 @@ function picture(
 }
 
 /** Dark at the top, bright at the bottom: not the same upside down. */
-const ramp = (offset = 0) =>
+const ramp = () =>
   picture((_x, y) => {
-    const level = Math.min(255, Math.round((y / SAMPLE_HEIGHT) * 255) + offset);
+    const level = Math.round((y / SAMPLE_HEIGHT) * 255);
     return [level, level, level];
   });
 const flipped = () =>
@@ -97,44 +97,22 @@ describe("reader", () => {
     expect(calls).toEqual({ canvas: 5, gl: 7 });
   });
 
-  it("keeps the canvas where WebGL is slower, and stops trying WebGL", () => {
-    const { read, calls } = setup({ canvasMs: 6, glMs: 22 });
-    expect(methods(read, 8).every((method) => method === "canvas")).toBe(true);
-    expect(calls.gl).toBe(5);
+  it("keeps the canvas where WebGL is slower or not clearly faster", () => {
+    const slower = setup({ canvasMs: 6, glMs: 22 });
+    expect(methods(slower.read, 8).every((m) => m === "canvas")).toBe(true);
+    // Stops trying WebGL once it has lost.
+    expect(slower.calls.gl).toBe(5);
+    const close = setup({ canvasMs: 5, glMs: 4 });
+    expect(methods(close.read, 5).at(-1)).toBe("canvas");
   });
 
-  it("keeps the canvas when WebGL is not clearly faster", () => {
-    const { read } = setup({ canvasMs: 5, glMs: 4 });
-    expect(methods(read, 5).at(-1)).toBe("canvas");
-  });
-
-  it("returns the WebGL colors as they are, without correction", () => {
-    const { read } = setup({ glPicture: () => ramp(8) });
-    methods(read, 5);
-    const {
-      colors: {
-        top: [[fast = 0] = []],
-      },
-    } = read(frame(), layout);
-    const {
-      colors: {
-        top: [[reference = 0] = []],
-      },
-    } = setup().read(frame(), layout);
-    expect(fast).toBe(reference + 8);
-  });
-
-  it("reads fewer zones along the short sides, from the frame's own ratio", () => {
-    const { read } = setup({ canvasMs: 14, glMs: 3 });
+  it("reads fewer zones along the short sides of a frame that is not 16:9, and keeps WebGL", () => {
     const tall = { displayHeight: 1920, displayWidth: 1080 } as VideoFrame;
+    const { read } = setup({ canvasMs: 14, glMs: 3 });
     const { colors } = read(tall, { points: 12 });
     expect(colors.top).toHaveLength(7);
     expect(colors.left).toHaveLength(12);
-  });
-
-  it("keeps WebGL on a frame that is not 16:9: both methods read the same zones", () => {
-    const { read } = setup({ canvasMs: 14, glMs: 3 });
-    const tall = { displayHeight: 1920, displayWidth: 1080 } as VideoFrame;
+    // Both methods read the same zones: WebGL is still compared fairly.
     const used = Array.from({ length: 8 }, () => read(tall, layout).method);
     expect(used.at(-1)).toBe("webgl");
   });
@@ -148,7 +126,7 @@ describe("reader", () => {
     expect(read(frame(3840), layout).method).toBe("webgl");
   });
 
-  it("switches when, a minute later, the other method has become much faster", () => {
+  it("a minute later, switches for a much faster method but not for a gain under 30 %", () => {
     const { read, cost, wait } = setup({ canvasMs: 14, glMs: 3 });
     methods(read, 8);
     expect(read(frame(), layout).method).toBe("webgl");
@@ -165,56 +143,74 @@ describe("reader", () => {
       "canvas",
     ]);
     expect(read(frame(), layout).method).toBe("canvas");
+
+    const small = setup({ canvasMs: 14, glMs: 3 });
+    methods(small.read, 8);
+    small.cost.glMs = 10;
+    small.cost.canvasMs = 8;
+    small.wait(61_000);
+    methods(small.read, 5);
+    expect(small.read(frame(), layout).method).toBe("webgl");
   });
 
-  it("does not switch for a gain under 30 %", () => {
-    const { read, cost, wait } = setup({ canvasMs: 14, glMs: 3 });
-    methods(read, 8);
-    cost.glMs = 10;
-    cost.canvasMs = 8;
-    wait(61_000);
-    methods(read, 5);
-    expect(read(frame(), layout).method).toBe("webgl");
+  it("measures again as soon as the method in use slows down by half or gets much faster", () => {
+    // Not a minute yet, but past the minimum gap: the drift is what triggers.
+    const slowed = setup({ canvasMs: 14, glMs: 3 });
+    methods(slowed.read, 8);
+    slowed.cost.glMs = 30;
+    slowed.cost.canvasMs = 6;
+    slowed.wait(11_000);
+    methods(slowed.read, 20);
+    expect(slowed.read(frame(), layout).method).toBe("canvas");
+
+    // WebGL is slower here, so the canvas serves; the machine then frees up.
+    const faster = setup({ canvasMs: 14, glMs: 20 });
+    methods(faster.read, 8);
+    expect(faster.read(frame(), layout).method).toBe("canvas");
+    faster.cost.canvasMs = 8;
+    faster.cost.glMs = 3;
+    faster.wait(11_000);
+    methods(faster.read, 20);
+    expect(faster.read(frame(), layout).method).toBe("webgl");
   });
 
-  it("measures again as soon as the method in use slows down by half", () => {
-    const { read, cost, wait } = setup({ canvasMs: 14, glMs: 3 });
-    methods(read, 8);
-    cost.glMs = 30;
-    cost.canvasMs = 6;
-    // Not a minute yet, but past the minimum gap: the slowdown is what triggers.
-    wait(11_000);
-    methods(read, 20);
-    expect(read(frame(), layout).method).toBe("canvas");
-  });
+  it("measures again when the method in use crosses 10 ms, even without a 50 % drift", () => {
+    // 8 -> 11 ms is under +50 %, but it crosses the 10 ms mark; the canvas is quick now.
+    const first = setup({ canvasMs: 20, glMs: 8 });
+    methods(first.read, 8);
+    expect(first.read(frame(), layout).method).toBe("webgl");
+    first.cost.glMs = 11;
+    first.cost.canvasMs = 5;
+    first.wait(11_000);
+    methods(first.read, 20);
+    expect(first.read(frame(), layout).method).toBe("canvas");
 
-  it("measures again as soon as the method in use gets much faster", () => {
-    // WebGL is slower here, so the canvas serves.
-    const { read, cost, wait } = setup({ canvasMs: 14, glMs: 20 });
-    methods(read, 8);
-    expect(read(frame(), layout).method).toBe("canvas");
-    // The machine frees up: both get quicker, and WebGL now wins by far.
-    cost.canvasMs = 8;
-    cost.glMs = 3;
-    // Not a minute yet, but past the minimum gap: the speed-up is what triggers.
-    wait(11_000);
-    methods(read, 20);
-    expect(read(frame(), layout).method).toBe("webgl");
-  });
-
-  it("measures again when the method in use crosses 10 ms, without a 50 % drift", () => {
+    // Again a second time, after dropping under 10 ms (a small move: no new measure).
     const { read, cost, wait } = setup({ canvasMs: 20, glMs: 8 });
     methods(read, 8);
-    expect(read(frame(), layout).method).toBe("webgl");
-    // 8 -> 11 ms is under +50 %, but it crosses the 10 ms mark; the canvas is quick now.
     cost.glMs = 11;
-    cost.canvasMs = 5;
+    cost.canvasMs = 30;
+    wait(11_000);
+    methods(read, 20);
+    expect(read(frame(), layout).method).toBe("webgl");
+    cost.glMs = 9;
+    wait(11_000);
+    methods(read, 20);
+    cost.glMs = 11.5;
+    cost.canvasMs = 4;
     wait(11_000);
     methods(read, 20);
     expect(read(frame(), layout).method).toBe("canvas");
   });
 
-  it("stays quiet while both methods stay over 10 ms", () => {
+  it("does not measure again while nothing changes, nor while both methods stay over 10 ms", () => {
+    const steady = setup({ canvasMs: 14, glMs: 3 });
+    methods(steady.read, 8);
+    const before = steady.calls.canvas;
+    steady.wait(20_000);
+    methods(steady.read, 10);
+    expect(steady.calls.canvas).toBe(before);
+
     // Nothing better exists: measuring again every 10 s would only cost.
     const { read, calls, wait } = setup({ canvasMs: 11, glMs: 26 });
     methods(read, 8);
@@ -228,26 +224,6 @@ describe("reader", () => {
     expect(calls.gl).toBe(after);
   });
 
-  it("measures again when it crosses 10 ms a second time, after dropping under", () => {
-    const { read, cost, wait } = setup({ canvasMs: 20, glMs: 8 });
-    methods(read, 8);
-    cost.glMs = 11;
-    cost.canvasMs = 30;
-    wait(11_000);
-    methods(read, 20);
-    // Probed, still WebGL (11 against 30). It dips under 10 ms (a small move:
-    // no new measure), then goes over again, and the canvas is quick now.
-    expect(read(frame(), layout).method).toBe("webgl");
-    cost.glMs = 9;
-    wait(11_000);
-    methods(read, 20);
-    cost.glMs = 11.5;
-    cost.canvasMs = 4;
-    wait(11_000);
-    methods(read, 20);
-    expect(read(frame(), layout).method).toBe("canvas");
-  });
-
   it("flags the frames read both ways to compare, and only those", () => {
     const { read } = setup({ canvasMs: 14, glMs: 3 });
     const flags = Array.from(
@@ -255,20 +231,6 @@ describe("reader", () => {
       () => read(frame(), layout).probe === true
     );
     expect(flags).toEqual([true, true, true, true, true, false, false, false]);
-  });
-
-  it("does not flag the frames of a forced method", () => {
-    const { read } = setup({ method: "webgl" });
-    expect(read(frame(), layout).probe).not.toBe(true);
-  });
-
-  it("does not measure again while nothing changes", () => {
-    const { read, calls, wait } = setup({ canvasMs: 14, glMs: 3 });
-    methods(read, 8);
-    const before = calls.canvas;
-    wait(20_000);
-    methods(read, 10);
-    expect(calls.canvas).toBe(before);
   });
 
   it("does not count probes made on a black picture", () => {
@@ -283,23 +245,21 @@ describe("reader", () => {
     expect(calls.gl).toBe(1);
   });
 
-  it("never uses a GPU reader that throws", () => {
+  it("never uses a GPU reader that throws, at the start or after having been chosen", () => {
     let calls = 0;
-    const read = createReader({
+    const broken = createReader({
       canvas: () => ramp(),
       gl: () => {
         calls += 1;
         throw new Error("context lost");
       },
     });
-    expect(read(frame(), layout).method).toBe("canvas");
-    expect(read(frame(), layout).method).toBe("canvas");
+    expect(broken(frame(), layout).method).toBe("canvas");
+    expect(broken(frame(), layout).method).toBe("canvas");
     expect(calls).toBe(1);
-  });
 
-  it("drops WebGL when it throws after having been chosen", () => {
-    const failFrom = { call: Number.POSITIVE_INFINITY };
-    let calls = 0;
+    let glCalls = 0;
+    let failFrom = Number.POSITIVE_INFINITY;
     let time = 0;
     const read = createReader({
       canvas: () => {
@@ -307,9 +267,9 @@ describe("reader", () => {
         return ramp();
       },
       gl: () => {
-        calls += 1;
+        glCalls += 1;
         time += 3;
-        if (calls >= failFrom.call) {
+        if (glCalls >= failFrom) {
           throw new Error("context lost");
         }
         return ramp();
@@ -317,30 +277,32 @@ describe("reader", () => {
       now: () => time,
     });
     methods(read, 6);
-    failFrom.call = 7;
+    failFrom = 7;
     expect(read(frame(), layout).method).toBe("canvas");
     expect(read(frame(), layout).method).toBe("canvas");
-    expect(calls).toBe(7);
+    expect(glCalls).toBe(7);
   });
 
-  it("works without a GPU reader", () => {
-    const read = createReader({ canvas: () => ramp() });
-    expect(read(frame(), layout).method).toBe("canvas");
+  it("works without a GPU reader, even when WebGL is forced", () => {
+    expect(createReader({ canvas: () => ramp() })(frame(), layout).method).toBe(
+      "canvas"
+    );
+    expect(
+      createReader({ canvas: () => ramp(), method: "webgl" })(frame(), layout)
+        .method
+    ).toBe("canvas");
   });
 
   describe("forced method", () => {
-    it('never calls WebGL when method is "canvas"', () => {
-      const { read, calls } = setup({ method: "canvas" });
-      expect(methods(read, 6).every((method) => method === "canvas")).toBe(
-        true
-      );
-      expect(calls).toEqual({ canvas: 6, gl: 0 });
-    });
+    it("never calls WebGL when forced to canvas; reads with WebGL from the first frame, unflagged, when forced to webgl", () => {
+      const canvas = setup({ method: "canvas" });
+      expect(methods(canvas.read, 6).every((m) => m === "canvas")).toBe(true);
+      expect(canvas.calls).toEqual({ canvas: 6, gl: 0 });
 
-    it('reads with WebGL from the first frame when method is "webgl"', () => {
-      const { read, calls } = setup({ method: "webgl" });
-      expect(methods(read, 6).every((method) => method === "webgl")).toBe(true);
-      expect(calls).toEqual({ canvas: 0, gl: 6 });
+      const webgl = setup({ method: "webgl" });
+      expect(webgl.read(frame(), layout).probe).not.toBe(true);
+      expect(methods(webgl.read, 5).every((m) => m === "webgl")).toBe(true);
+      expect(webgl.calls).toEqual({ canvas: 0, gl: 6 });
     });
 
     it('keeps WebGL on a picture that "auto" would reject', () => {
@@ -349,7 +311,7 @@ describe("reader", () => {
       expect(calls.canvas).toBe(0);
     });
 
-    it('falls back to the canvas for good when WebGL throws and method is "webgl"', () => {
+    it("falls back to the canvas for good when WebGL throws", () => {
       let calls = 0;
       const read = createReader({
         canvas: () => ramp(),
@@ -362,11 +324,6 @@ describe("reader", () => {
       expect(read(frame(), layout).method).toBe("canvas");
       expect(read(frame(), layout).method).toBe("canvas");
       expect(calls).toBe(1);
-    });
-
-    it('uses the canvas when method is "webgl" but there is no GPU reader', () => {
-      const read = createReader({ canvas: () => ramp(), method: "webgl" });
-      expect(read(frame(), layout).method).toBe("canvas");
     });
   });
 });

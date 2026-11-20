@@ -1,43 +1,43 @@
 import {
   type CSSProperties,
   type ElementType,
-  type ForwardRefExoticComponent,
   forwardRef,
   type ReactNode,
-  type RefAttributes,
   useCallback,
   useEffect,
   useState,
 } from "react";
-import { ambient } from "../ambient/index.js";
+import { type AmbientOptions, ambient } from "../ambient/index.js";
 import type { Effect, EffectOptions } from "../core/effect.js";
 import { resolveVideo } from "../core/resolve-video.js";
-import { halo } from "../halo/index.js";
-import { letterbox } from "../letterbox/index.js";
-import { theme } from "../theme/index.js";
+import { type HaloOptions, halo } from "../halo/index.js";
+import { type ThemeOptions, theme } from "../theme/index.js";
 import { useGlowContext } from "./provider.js";
 import { useGlow } from "./use-glow.js";
 
-export interface GlowComponentProps<O> {
-  /** The element rendered, where the effect applies. Default `div`. */
-  as?: ElementType;
-  children?: ReactNode;
-  className?: string;
-  options?: O & EffectOptions;
-  style?: CSSProperties;
-  /** Default: the provider's video, else the first `<video>` among the children. */
-  video?: HTMLVideoElement | null;
-}
+/** The element rendered, plus the effect's own settings as props. */
+export type GlowComponentProps<O = object> = O &
+  EffectOptions & {
+    /** The element rendered, where the effect applies. Default `div`. */
+    as?: ElementType;
+    children?: ReactNode;
+    className?: string;
+    style?: CSSProperties;
+    /** Default: the provider's video, else the first `<video>` among the children. */
+    video?: HTMLVideoElement | null;
+  };
+
+export type HaloProps = GlowComponentProps<HaloOptions>;
+export type AmbientProps = GlowComponentProps<AmbientOptions>;
+export type ThemeProps = GlowComponentProps<ThemeOptions>;
 
 /** A component that renders an element and runs `effect` on it. */
-export function glowComponent<O>(
-  effect: Effect<O>,
-  name: string
-): ForwardRefExoticComponent<
-  GlowComponentProps<O> & RefAttributes<HTMLElement>
-> {
+export function glowComponent<O>(effect: Effect<O>, name: string) {
   const Component = forwardRef<HTMLElement, GlowComponentProps<O>>(
-    ({ as: Tag = "div", children, className, options, style, video }, ref) => {
+    (
+      { as: Tag = "div", children, className, style, video, ...options },
+      ref
+    ) => {
       const context = useGlowContext();
       // Held in state, so the effect starts once the element exists.
       const [element, setElement] = useState<HTMLElement | null>(null);
@@ -66,7 +66,11 @@ export function glowComponent<O>(
         observer.observe(element, { childList: true, subtree: true });
         return () => observer.disconnect();
       }, [element, given]);
-      useGlow(effect, { element, video: given ?? found }, options);
+      useGlow(
+        effect,
+        { element, video: given ?? found },
+        options as O & EffectOptions
+      );
       return (
         <Tag className={className} ref={setRef} style={style}>
           {children}
@@ -81,4 +85,3 @@ export function glowComponent<O>(
 export const Halo = glowComponent(halo, "Halo");
 export const Ambient = glowComponent(ambient, "Ambient");
 export const Theme = glowComponent(theme, "Theme");
-export const Letterbox = glowComponent(letterbox, "Letterbox");

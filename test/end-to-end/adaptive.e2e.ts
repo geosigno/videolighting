@@ -1,5 +1,5 @@
-import { expect, test as it, test } from "@playwright/test";
-import { open, VIDEO } from "./page-helpers.js";
+import { expect, test } from "@playwright/test";
+import { open, VIDEO } from "./helpers.js";
 
 /**
  * The read must follow the machine during a video, not only at the start:
@@ -36,9 +36,9 @@ declare global {
 }
 
 test.describe("adaptive read", () => {
-  it.setTimeout(120_000);
+  test.setTimeout(120_000);
 
-  it("compares the methods again when the machine slows down, and when it recovers", async ({
+  test("compares the methods again when the machine slows down, and when it recovers", async ({
     page,
   }) => {
     await open(page, {

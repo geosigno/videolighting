@@ -22,26 +22,26 @@ const BASE = "#101018";
 /**
  * Three soft blobs in the video's own colours (dominant, second dominant, mean)
  * drifting slowly, like a music player's background. The colours are CSS
- * custom properties on the layer (`--glow-primary`, `--glow-secondary`,
- * `--glow-mean`); each blob is one radial gradient from its colour to
+ * custom properties on the layer (`--vl-primary`, `--vl-secondary`,
+ * `--vl-mean`); each blob is one radial gradient from its colour to
  * transparent. A gradient with no mask measured about 40 % less GPU than a flat
  * colour under a fixed radial mask, for the same picture.
  */
 const BLOBS = [
   {
-    color: "--glow-primary",
+    color: "--vl-primary",
     drift: "translate(40%, 25%) scale(1.25)",
     duration: 23_000,
     place: "left:-20%;top:-30%",
   },
   {
-    color: "--glow-secondary",
+    color: "--vl-secondary",
     drift: "translate(-35%, 30%) scale(0.85)",
     duration: 29_000,
     place: "right:-25%;top:10%",
   },
   {
-    color: "--glow-mean",
+    color: "--vl-mean",
     drift: "translate(30%, -35%) scale(1.15)",
     duration: 19_000,
     place: "left:15%;bottom:-45%",
@@ -76,16 +76,16 @@ function mountBlobs(
   }
 
   return watcher.subscribe(({ mean, primary, secondary }) => {
-    layer.setVar("--glow-primary", css(primary));
-    layer.setVar("--glow-secondary", css(secondary));
-    layer.setVar("--glow-mean", css(mean));
+    layer.setVar("--vl-primary", css(primary));
+    layer.setVar("--vl-secondary", css(secondary));
+    layer.setVar("--vl-mean", css(mean));
   });
 }
 
 export const ambient: Effect<AmbientOptions> = (source, element, options) => {
   const { element: host, release, watcher } = acquire(source, element, options);
   const layer = createLayer(host);
-  layer.element.dataset.glow = "ambient";
+  layer.element.dataset.vl = "ambient";
   layer.element.style.background = BASE;
   if (COMPOSITOR_HINTS) {
     layer.element.style.contain = "paint";

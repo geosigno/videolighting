@@ -1,13 +1,13 @@
 import Hls from "hls.js";
 import { css } from "../../src/core/colors.js";
+import { MUX_URL } from "../compat-cases.js";
 import {
   ambient,
   type EdgeColors,
   type Rgb,
   type Watcher,
   watch,
-} from "../../src/index.js";
-import { MUX_URL } from "../compat-cases.js";
+} from "../internal.js";
 import "../nav.js";
 import "./ambient-lab.css";
 

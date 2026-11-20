@@ -1,7 +1,7 @@
 import "./nav.js";
 import { createGlowWith, type Glow } from "../src/core/glow.js";
-import { EDGE_POINTS, type EdgeColors, watchVideo } from "../src/index.js";
 import { copyText } from "./copy.js";
+import { EDGE_POINTS, type EdgeColors, watchVideo } from "./internal.js";
 import { createLegacyGlow } from "./legacy-glow.js";
 import { createSingleMaskGlow } from "./single-mask-glow.js";
 

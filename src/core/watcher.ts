@@ -1,5 +1,6 @@
 import { type SampleCost, watchVideo } from "./capture.js";
-import { createSmoother, mean, palette, type Smoother } from "./colors.js";
+import { createSmoother, pickGoal, type Smoother } from "./colors.js";
+import { posterShown, watchPoster } from "./poster.js";
 import type { MethodChoice, ReadMethod } from "./reader.js";
 import type { EdgeColors, EdgeLayout, Rgb } from "./sample.js";
 
@@ -13,8 +14,10 @@ import type { EdgeColors, EdgeLayout, Rgb } from "./sample.js";
  *  - `subscribe`: three smoothed colours, on every display frame, only while
  *    they are moving. The palette and the smoothing are not computed at all
  *    while nobody subscribes.
- * When the video leaves the viewport the read pauses, and so do both streams:
- * what was last painted stays.
+ * When the video leaves the viewport the read pauses, and so do both streams
+ * (what was last painted stays), but only if every handle merely draws around
+ * the video (`aroundVideo`: halo). A background, a theme or a plain
+ * `watch()` can be anywhere in the page: they keep the read going.
  */
 
 /** The video's colours, smoothed. */
@@ -36,12 +39,25 @@ export const NEUTRAL: Colors = Object.freeze({
 });
 
 export interface WatcherOptions extends EdgeLayout {
+  /**
+   * This handle only draws around the video (a halo), so it has
+   * no use for the colors while the video is off screen. The read pauses there
+   * only if every handle says so. Default `false`: the colors are wanted
+   * wherever the video is in the page (a background, a theme, `watch()`).
+   */
+  aroundVideo?: boolean;
   /** How the Worker reads the frames. Default `"auto"`: measure and pick. */
   method?: MethodChoice;
   /** Called once if the browser refuses to read the pixels (no CORS, DRM). */
   onError?: (error: unknown) => void;
   /** Time constant of the smoothing, in seconds. Default 0.12. */
   tau?: number;
+  /**
+   * `primary` and `secondary` are the most vivid colours of the whole picture
+   * (a pink shirt on a beige scene). `false` gives the plain dominant colours
+   * along the edges, by area, with no taste added. Default `true`.
+   */
+  vibrant?: boolean;
   /** `false` forces the main-thread engine. Default: the Worker engine. */
   worker?: boolean;
 }
@@ -83,6 +99,14 @@ export interface Watcher {
 export const GRACE_MS = 50;
 const DEFAULT_TAU = 0.12;
 const STATS_SMOOTHING = 0.1;
+/** What a poster costs the listeners: nothing measured, it is read once on the main thread. */
+const POSTER_COST: SampleCost = {
+  latencyMs: 0,
+  mainMs: 0,
+  method: "canvas",
+  probe: false,
+  workerMs: 0,
+};
 
 interface Shared {
   colors: Colors;
@@ -95,11 +119,15 @@ interface Shared {
   last: { cost: SampleCost; edges: EdgeColors } | undefined;
   lastTick: number;
   method: ReadMethod;
+  /** Handles that want the colors even while the video is off screen. */
+  pageWide: number;
   /** Main-thread ms accumulated since the previous sampled frame. */
   pendingMs: number;
   raf: number | undefined;
   /** The read settings it was started with, as `readKey` gives them. */
   readKey: string;
+  /** Ask the read to look again at whether it may pause off screen. */
+  recheck: () => void;
   references: number;
   removeEvents: () => void;
   retarget: (edges: EdgeColors) => void;
@@ -108,6 +136,7 @@ interface Shared {
   skipped: number;
   smoother: Smoother;
   snapNext: boolean;
+  stopPoster: () => void;
   stopRead: () => void;
   teardown: ReturnType<typeof setTimeout> | undefined;
   watcherMs: number;
@@ -129,30 +158,6 @@ function call<A extends unknown[]>(listener: (...args: A) => void, ...args: A) {
   }
 }
 
-/** Whole-number channels, so a still picture gives the very same goal every sample. */
-const whole = ([r, g, b]: Rgb): Rgb => [
-  Math.round(r),
-  Math.round(g),
-  Math.round(b),
-];
-
-const distance = (a: Rgb, b: Rgb) =>
-  Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
-
-/** The two dominant colours keep their roles from one frame to the next. */
-function keepOrder(previous: Rgb[], next: Rgb[]): Rgb[] {
-  const [p0, p1] = previous;
-  const [n0, n1] = next;
-  if (p0 && p1 && n0 && n1) {
-    const straight = distance(p0, n0) + distance(p1, n1);
-    const crossed = distance(p0, n1) + distance(p1, n0);
-    if (crossed < straight) {
-      return [n1, n0];
-    }
-  }
-  return next;
-}
-
 function asColors([primary, secondary, average]: Rgb[]): Colors {
   const fallback = primary ?? NEUTRAL_RGB;
   return Object.freeze({
@@ -168,9 +173,10 @@ export const readKey = ({
   method,
   points,
   tau,
+  vibrant,
   worker,
 }: WatcherOptions): string =>
-  JSON.stringify([depth, method, points, tau, worker]);
+  JSON.stringify([depth, method, points, tau, vibrant, worker]);
 
 function startRead(video: HTMLVideoElement, options: WatcherOptions): Shared {
   const state: Shared = {
@@ -182,8 +188,10 @@ function startRead(video: HTMLVideoElement, options: WatcherOptions): Shared {
     last: undefined,
     lastTick: 0,
     method: "canvas",
+    pageWide: 0,
     pendingMs: 0,
     raf: undefined,
+    recheck: () => undefined,
     readKey: readKey(options),
     references: 0,
     removeEvents: () => undefined,
@@ -197,13 +205,18 @@ function startRead(video: HTMLVideoElement, options: WatcherOptions): Shared {
       NEUTRAL_RGB,
     ]),
     snapNext: true,
+    stopPoster: () => undefined,
     stopRead: () => undefined,
     teardown: undefined,
     watcherMs: 0,
   };
 
-  const publish = () => {
+  /** Publish the smoothed colours and tell the frame listeners. */
+  const emit = () => {
     state.colors = asColors(state.smoother.colors);
+    for (const listener of state.frameListeners) {
+      call(listener, state.colors);
+    }
   };
 
   const tick = (now: number) => {
@@ -212,10 +225,7 @@ function startRead(video: HTMLVideoElement, options: WatcherOptions): Shared {
     const dt = state.lastTick === 0 ? 16 : Math.min(100, now - state.lastTick);
     state.lastTick = now;
     if (state.smoother.step(state.goal, dt)) {
-      publish();
-      for (const listener of state.frameListeners) {
-        call(listener, state.colors);
-      }
+      emit();
       schedule();
     } else {
       state.lastTick = 0;
@@ -230,18 +240,12 @@ function startRead(video: HTMLVideoElement, options: WatcherOptions): Shared {
   }
 
   const retarget = (edges: EdgeColors) => {
-    const points = [
-      ...edges.top,
-      ...edges.right,
-      ...edges.bottom,
-      ...edges.left,
-    ];
-    const [first, second] = keepOrder(state.goal, palette(points, 2));
-    const next = [
-      whole(first ?? NEUTRAL_RGB),
-      whole(second ?? first ?? NEUTRAL_RGB),
-      whole(mean(points)),
-    ];
+    const next = pickGoal(
+      edges,
+      state.goal,
+      options.vibrant !== false,
+      NEUTRAL_RGB
+    );
     const unchanged = next.every((color, i) =>
       color.every((channel, c) => channel === state.goal[i]?.[c])
     );
@@ -249,10 +253,7 @@ function startRead(video: HTMLVideoElement, options: WatcherOptions): Shared {
     if (state.snapNext) {
       state.snapNext = false;
       state.smoother.snap(state.goal);
-      publish();
-      for (const listener of state.frameListeners) {
-        call(listener, state.colors);
-      }
+      emit();
     }
     // A goal that did not move gives the loop nothing to do: no frame to schedule.
     if (!unchanged) {
@@ -261,24 +262,37 @@ function startRead(video: HTMLVideoElement, options: WatcherOptions): Shared {
   };
   state.retarget = retarget;
 
-  const begin = () =>
+  /** Give listeners a new set of edge colours: a frame, or the poster before the first frame. */
+  const deliver = (edges: EdgeColors, cost: SampleCost, fromFrame: boolean) => {
+    const started = performance.now();
+    if (fromFrame) {
+      state.samples += 1;
+      state.method = cost.method;
+    }
+    state.last = { cost, edges };
+    for (const listener of state.sampleListeners) {
+      call(listener, edges, cost);
+    }
+    if (state.frameListeners.size > 0) {
+      retarget(edges);
+    }
+    if (fromFrame) {
+      const used = state.pendingMs + (performance.now() - started);
+      state.pendingMs = 0;
+      state.watcherMs += (used - state.watcherMs) * STATS_SMOOTHING;
+    }
+  };
+
+  const watchRead = () =>
     watchVideo(video, {
+      pauseOffScreen: () => state.pageWide === 0,
       depth: options.depth,
       method: options.method,
       onColors: (edges, cost) => {
-        const started = performance.now();
-        state.samples += 1;
-        state.method = cost.method;
-        state.last = { cost, edges };
-        for (const listener of state.sampleListeners) {
-          call(listener, edges, cost);
+        // The video still shows its poster: its colours are the poster's.
+        if (!posterShown(video)) {
+          deliver(edges, cost, true);
         }
-        if (state.frameListeners.size > 0) {
-          retarget(edges);
-        }
-        const used = state.pendingMs + (performance.now() - started);
-        state.pendingMs = 0;
-        state.watcherMs += (used - state.watcherMs) * STATS_SMOOTHING;
       },
       onError: (error) => {
         state.failure = { error };
@@ -293,8 +307,23 @@ function startRead(video: HTMLVideoElement, options: WatcherOptions): Shared {
       worker: options.worker,
     });
 
+  /** Start the read, keeping `stopRead` and `recheck` pointed at it. */
+  const begin = () => {
+    const stop = watchRead();
+    state.recheck = stop.recheck;
+    return stop;
+  };
+
+  const poster = watchPoster(
+    video,
+    { depth: options.depth, points: options.points },
+    (edges) => deliver(edges, POSTER_COST, false)
+  );
+  state.stopPoster = poster.stop;
+
   const rearm = () => {
     state.snapNext = true;
+    poster.refresh();
     if (state.failure) {
       // A new video: the read that failed on the old one gets another chance.
       state.failure = undefined;
@@ -314,6 +343,7 @@ function startRead(video: HTMLVideoElement, options: WatcherOptions): Shared {
 }
 
 function stopRead(video: HTMLVideoElement, state: Shared) {
+  state.stopPoster();
   state.stopRead();
   state.removeEvents();
   if (state.raf !== undefined) {
@@ -387,6 +417,11 @@ export function watch(
   }
   const read = state;
   read.references += 1;
+  const pageWide = !options.aroundVideo;
+  if (pageWide) {
+    read.pageWide += 1;
+  }
+  read.recheck();
 
   const mine = {
     error: new Set<(error: unknown) => void>(),
@@ -424,6 +459,10 @@ export function watch(
       read.errorListeners.delete(listener);
     }
     read.references -= 1;
+    if (pageWide) {
+      read.pageWide -= 1;
+    }
+    read.recheck();
     if (read.references <= 0) {
       read.teardown = setTimeout(() => {
         if (read.references <= 0) {

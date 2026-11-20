@@ -3,8 +3,7 @@
  * layers that move or blur, `contain: paint` on the effect's layer. They ask
  * the browser to keep those layers on the GPU between frames.
  *
- * Geoffrey's call (design 2026-11-18, D4): on, everywhere, from the start. Their
- * effect depends on the machine: on the one measured (Apple M1 Pro, Chrome) they
+ * On everywhere. Their effect depends on the machine: on the one measured (Apple M1 Pro, Chrome) they
  * changed nothing measurable, and the cost of keeping 3 to 4 layers in GPU
  * memory is not measured. Set this to `false` to take them all out at once.
  */

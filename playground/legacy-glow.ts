@@ -1,5 +1,5 @@
 import type { Glow } from "../src/core/glow.js";
-import type { EdgeColors } from "../src/index.js";
+import type { EdgeColors } from "./internal.js";
 
 /**
  * The previous construction, kept only as the baseline of the CSS benchmark:

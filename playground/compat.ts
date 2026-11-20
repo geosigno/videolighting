@@ -1,5 +1,4 @@
 import "./nav.js";
-import { type EdgeColors, type SampleCost, watchVideo } from "../src/index.js";
 import {
   CASES,
   type CompatCase,
@@ -8,6 +7,7 @@ import {
   type Urls,
 } from "./compat-cases.js";
 import { copyText } from "./copy.js";
+import { type EdgeColors, type SampleCost, watchVideo } from "./internal.js";
 import { describe, waitReady } from "./ready.js";
 
 type Kind = "readable" | "black" | "blocked" | "error" | "noplay" | "timeout";

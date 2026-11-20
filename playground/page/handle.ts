@@ -1,13 +1,6 @@
 import type { ProfilerOnRenderCallback } from "react";
 import { inspect, peekColors } from "../../src/core/watcher.js";
-import {
-  ambient,
-  halo,
-  letterbox,
-  theme,
-  watch,
-  watchVideo,
-} from "../../src/index.js";
+import { ambient, halo, theme, watch, watchVideo } from "../internal.js";
 import type { Metrics } from "./metrics-store.js";
 import type { EffectName } from "./state.js";
 
@@ -33,7 +26,6 @@ const api = {
   ambient,
   halo,
   inspect,
-  letterbox,
   peekColors,
   theme,
   watch,
@@ -55,7 +47,7 @@ const errorLog: string[] = [];
 let eventCount = 0;
 
 export interface LateVideoRecord {
-  /** `[data-glow]` layers in the page then. */
+  /** `[data-vl]` layers in the page then. */
   layers: number;
   /** Commits of each effect component by then: they were mounted. */
   renders: Record<string, number>;
@@ -66,7 +58,7 @@ let lateVideoRecord: LateVideoRecord | undefined;
 /** Called just before the late `<video>` is added. */
 export const recordLateVideo = () => {
   lateVideoRecord = {
-    layers: document.querySelectorAll("[data-glow]").length,
+    layers: document.querySelectorAll("[data-vl]").length,
     renders: { ...renderCounts },
     videos: document.querySelectorAll("video").length,
   };

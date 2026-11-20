@@ -1,6 +1,6 @@
-import type { MethodChoice } from "../../src/index.js";
+import type { MethodChoice } from "../internal.js";
 
-export type EffectName = "halo" | "ambient" | "theme" | "letterbox";
+export type EffectName = "halo" | "ambient" | "theme";
 
 export type Aspect = "16:9" | "4:3" | "21:9" | "9:16";
 
@@ -16,14 +16,11 @@ export interface PageState {
   src: string;
   strict: boolean;
   variant: AmbientVariant;
+  /** `primary` / `secondary` are the most vivid colours (default) or the plain dominant ones. */
+  vibrant: boolean;
 }
 
-const EFFECT_ORDER: readonly EffectName[] = [
-  "halo",
-  "ambient",
-  "theme",
-  "letterbox",
-];
+const EFFECT_ORDER: readonly EffectName[] = ["halo", "ambient", "theme"];
 const METHODS: readonly MethodChoice[] = ["auto", "webgl", "canvas"];
 export const ASPECTS: readonly Aspect[] = ["16:9", "4:3", "21:9", "9:16"];
 export const VARIANTS: readonly AmbientVariant[] = ["blobs", "mosaic"];
@@ -45,6 +42,7 @@ export const DEFAULTS: PageState = {
   src: "mire.mp4",
   strict: true,
   variant: "blobs",
+  vibrant: true,
 };
 
 function parseBool(value: string | null, fallback: boolean): boolean {
@@ -90,6 +88,7 @@ export function parseState(
     src: params.get("src") || defaults.src,
     strict: parseBool(params.get("strict"), defaults.strict),
     variant: VARIANTS.find((v) => v === variant) ?? defaults.variant,
+    vibrant: parseBool(params.get("vibrant"), defaults.vibrant),
   };
 }
 
@@ -121,6 +120,9 @@ export function toSearch(
   }
   if (state.strict !== defaults.strict) {
     params.set("strict", "0");
+  }
+  if (state.vibrant !== defaults.vibrant) {
+    params.set("vibrant", state.vibrant ? "1" : "0");
   }
   const query = params.toString();
   return query ? `?${query}` : "";
@@ -154,6 +156,9 @@ export function nonDefault(
   }
   if (state.strict !== defaults.strict) {
     labels.push("StrictMode off");
+  }
+  if (state.vibrant !== defaults.vibrant) {
+    labels.push(state.vibrant ? "vibrant" : "vibrant off");
   }
   return labels;
 }

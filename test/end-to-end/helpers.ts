@@ -1,17 +1,23 @@
 import { readFileSync } from "node:fs";
-import { expect, type Page, type TestInfo } from "@playwright/test";
-import type { Metrics } from "../playground/page/metrics-store.js";
-import type { EffectName } from "../playground/page/state.js";
-import type { EdgeColors, SampleCost } from "../src/index.js";
+import { expect, type Page, type TestInfo, test } from "@playwright/test";
+import type { EdgeColors, SampleCost } from "../../playground/internal.js";
+import type { Metrics } from "../../playground/page/metrics-store.js";
+import type { EffectName } from "../../playground/page/state.js";
 
 /**
  * What every end-to-end test shares: opening the reference page with its URL
  * as input, reading `window.glowPage`, and a few measures of the page.
  */
 
-export type { EffectName } from "../playground/page/state.js";
+export type { EffectName } from "../../playground/page/state.js";
 
-export const ALL: EffectName[] = ["halo", "ambient", "theme", "letterbox"];
+export const ALL: EffectName[] = ["halo", "ambient", "theme"];
+
+/** The page's test ids, as selectors. */
+export const FRAME = '[data-testid="frame"]';
+export const CONTAINER = '[data-testid="container"]';
+/** The element inside the card that wears the theme (the Theme component's own). */
+export const THEME_HOST = '[data-testid="theme-card"] > *';
 
 /** The page's own `<video>` (other tests add videos of their own). */
 export const VIDEO = '[data-testid="video"]';
@@ -100,7 +106,10 @@ export const SECURITY_ERROR = /Security|tainted|cross-origin/iu;
  */
 export async function crossOriginClip(page: Page): Promise<string> {
   const body = readFileSync(new URL("./public/quad-360.webm", import.meta.url));
-  const url = "http://127.0.0.1:5301/other-origin/quad.webm";
+  // The same server under another host name: another origin.
+  const origin = new URL(String(test.info().project.use.baseURL));
+  origin.hostname = "127.0.0.1";
+  const url = new URL("/other-origin/quad.webm", origin).href;
   await page.route(url, (route) =>
     route.fulfill({ body, contentType: "video/webm", status: 200 })
   );
@@ -405,4 +414,86 @@ export async function runCore(
     },
     [VIDEO, ms, worker] as const
   );
+}
+
+/** The neutral colour every read starts from. */
+export const NEUTRAL = [24, 24, 30];
+export const far = (a: number[], b: number[]) =>
+  Math.hypot(...b.map((v, i) => (a[i] ?? 0) - v));
+
+/** Red, green, blue of every colour stop of an element's background gradient. */
+export async function stops(page: Page, selector: string, nth: number) {
+  return await page.evaluate(
+    ({ nth: which, selector: query }) => {
+      const element = document.querySelectorAll<HTMLElement>(query)[which];
+      const image = element ? element.style.backgroundImage : "";
+      return [
+        ...image.matchAll(/rgb\((?<r>\d+)[, ]+(?<g>\d+)[, ]+(?<b>\d+)\)/gu),
+      ].map((m) => [
+        Number(m.groups?.r),
+        Number(m.groups?.g),
+        Number(m.groups?.b),
+      ]);
+    },
+    { nth, selector }
+  );
+}
+
+/** Channels of a CSS variable's `rgb(...)` value on the first element matching `selector`. */
+export async function channels(page: Page, selector: string, name: string) {
+  return await page.evaluate(
+    ({ name: variable, selector: query }) =>
+      (
+        document
+          .querySelector<HTMLElement>(query)
+          ?.style.getPropertyValue(variable) ?? ""
+      )
+        .match(/\d+/gu)
+        ?.map(Number) ?? [],
+    { name, selector }
+  );
+}
+
+/** In-page: the number of samples of the page video's read (-1: no read). */
+export const samplesOf = (page: Page) =>
+  page.evaluate((selector) => {
+    const { glowApi } = window;
+    const video = document.querySelector<HTMLVideoElement>(selector);
+    return video ? (glowApi?.inspect(video)?.stats().samples ?? -1) : -1;
+  }, VIDEO);
+
+/** Handles on the read of the video matching `selector` (the page's own by default). */
+export const referencesOf = (page: Page, selector = VIDEO) =>
+  page.evaluate((sel) => {
+    const video = document.querySelector<HTMLVideoElement>(sel);
+    const { glowApi } = window;
+    return video ? glowApi?.inspect(video)?.stats().references : undefined;
+  }, selector);
+
+/**
+ * Turns `name` off through the page and checks the effect cleaned up the
+ * element it ran on: the component's element goes with it, so it is kept
+ * aside first and looked at once detached (a layer left in it = no cleanup).
+ */
+export async function stopAndKeepHost(page: Page, name: EffectName) {
+  await page.evaluate((effect) => {
+    const target = window as Window & { kept?: Element };
+    target.kept =
+      document.querySelector(`[data-vl="${effect}"]`)?.parentElement ??
+      undefined;
+    target.glowPage?.setEffect(effect, false);
+  }, name);
+  await expect(page.locator(`[data-vl="${name}"]`)).toHaveCount(0);
+  // The effect's cleanup runs once React has let go of the element.
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const { kept } = window as unknown as { kept?: Element };
+        return {
+          detached: kept ? !kept.isConnected : false,
+          layers: kept ? kept.querySelectorAll("[data-vl]").length : -1,
+        };
+      })
+    )
+    .toEqual({ detached: true, layers: 0 });
 }

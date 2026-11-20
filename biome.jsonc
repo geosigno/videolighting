@@ -7,7 +7,8 @@
     "useIgnoreFile": true,
     "defaultBranch": "master"
   },
-  "files": { "includes": ["!**/.claude"] },
+  // `wip/`: parked work, not shipped, not checked.
+  "files": { "includes": ["!**/.claude", "!wip"] },
   "overrides": [
     {
       // Throwaway experiments: modern CSS (@property, ::selection) and long
@@ -20,6 +21,11 @@
           "suspicious": { "useBaseline": "off" }
         }
       }
+    },
+    {
+      // Playwright's own style: `test(...)` next to `test.describe(...)`.
+      "includes": ["test/end-to-end/**"],
+      "linter": { "rules": { "style": { "useConsistentTestIt": "off" } } }
     },
     {
       // The reference page's resizable container (`resize`).

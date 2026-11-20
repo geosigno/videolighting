@@ -4,7 +4,7 @@ import {
   useCallback,
   useEffect,
 } from "react";
-import type { MethodChoice } from "../../src/index.js";
+import type { MethodChoice } from "../internal.js";
 import {
   type AmbientVariant,
   ASPECTS,
@@ -24,7 +24,7 @@ const SOURCES = [
   "static.mp4",
   "mux",
 ];
-const EFFECTS: EffectName[] = ["halo", "ambient", "theme", "letterbox"];
+const EFFECTS: EffectName[] = ["halo", "ambient", "theme"];
 const METHODS: MethodChoice[] = ["auto", "webgl", "canvas"];
 
 /** Keys 1 to 4 toggle the effects, outside form fields. */
@@ -89,6 +89,11 @@ export function Controls({
   const onMainThread = useCallback(
     (event: ChangeEvent<HTMLInputElement>) =>
       onChange({ mainThread: event.target.checked }),
+    [onChange]
+  );
+  const onVibrant = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) =>
+      onChange({ vibrant: event.target.checked }),
     [onChange]
   );
   const onEffect = useCallback(
@@ -169,6 +174,15 @@ export function Controls({
             </option>
           ))}
         </select>
+      </label>
+      <label title="primary / secondary: the most vivid colours of the whole picture, or the plain dominant ones along the edges">
+        <input
+          checked={state.vibrant}
+          data-testid="vibrant"
+          onChange={onVibrant}
+          type="checkbox"
+        />{" "}
+        vibrant
       </label>
       <details data-testid="advanced">
         <summary>Advanced</summary>

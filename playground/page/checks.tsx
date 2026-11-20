@@ -5,15 +5,15 @@ import {
   useRef,
   useState,
 } from "react";
-import { ambient } from "../../src/index.js";
 import {
   type Colors,
-  GlowProvider,
   Halo,
+  LightingProvider,
   useColors,
   useColorsEvent,
-  useGlow,
 } from "../../src/react/index.js";
+import { useGlow } from "../../src/react/use-glow.js";
+import { ambient } from "../internal.js";
 import { countEvent, countRender, recordComponentError } from "./handle.js";
 
 /**
@@ -70,13 +70,13 @@ function ChildCheck({ src }: { src: string }) {
       <button data-testid="check-child-swap" onClick={swap} type="button">
         swap the video
       </button>
-      <GlowProvider video={null}>
+      <LightingProvider video={null}>
         <Halo className="pg-child-halo">
           {child !== "none" && (
             <video autoPlay key={child} loop muted playsInline src={src} />
           )}
         </Halo>
-      </GlowProvider>
+      </LightingProvider>
     </div>
   );
 }
@@ -112,9 +112,9 @@ function OnErrorCheck() {
       </button>
       <Halo
         className="pg-swatch"
-        options={
+        onError={
           withError
-            ? { onError: (error) => recordComponentError("onerror", error) }
+            ? (error) => recordComponentError("onerror", error)
             : undefined
         }
       />

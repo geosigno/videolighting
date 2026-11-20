@@ -1,4 +1,4 @@
-import type { EdgeColors, Rgb } from "../../src/index.js";
+import type { EdgeColors, Rgb } from "../internal.js";
 
 /**
  * Throwaway colour helpers for the labs. Nothing here is part of the library.

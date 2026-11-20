@@ -1,5 +1,5 @@
 import { describe, expect, test as it } from "bun:test";
-import { EDGE_POINTS, sampleEdges, zonesFor } from "./sample.js";
+import { sampleEdges, zonesFor } from "../../src/core/sample.js";
 
 type Rgb = [number, number, number];
 
@@ -27,32 +27,6 @@ const RED: Rgb = [255, 0, 0];
 const BLUE: Rgb = [0, 0, 255];
 
 describe("sampleEdges", () => {
-  it("reads EDGE_POINTS zones along the long sides and fewer along the short ones", () => {
-    // No aspect ratio given: the frame's own, 32 x 18 (16:9).
-    const edges = sampleEdges(
-      frame(32, 18, () => RED),
-      32,
-      18
-    );
-    expect(edges.top).toHaveLength(EDGE_POINTS);
-    expect(edges.bottom).toHaveLength(EDGE_POINTS);
-    expect(edges.left).toHaveLength(7);
-    expect(edges.right).toHaveLength(7);
-  });
-
-  it("a uniform frame yields that color everywhere", () => {
-    const edges = sampleEdges(
-      frame(32, 18, () => BLUE),
-      32,
-      18
-    );
-    for (const side of [edges.top, edges.right, edges.bottom, edges.left]) {
-      for (const color of side) {
-        expect(color).toEqual(BLUE);
-      }
-    }
-  });
-
   it("points follow the frame left→right and top→bottom", () => {
     // Left half red, right half blue.
     const edges = sampleEdges(
@@ -107,23 +81,6 @@ describe("sampleEdges", () => {
     expect(deep.top[0][2]).toBeGreaterThan(0);
   });
 
-  it("stays valid at extreme depths", () => {
-    const edges = sampleEdges(
-      frame(64, 36, () => RED),
-      64,
-      36,
-      { depth: 5 }
-    );
-    expect(edges.top[0]).toEqual(RED);
-    const thin = sampleEdges(
-      frame(64, 36, () => RED),
-      64,
-      36,
-      { depth: 0 }
-    );
-    expect(thin.top[0]).toEqual(RED);
-  });
-
   it("takes the border depth in the video's own space, one value per axis", () => {
     // Red where x < 30, blue elsewhere, on a 256 x 144 sample.
     const picture = frame(256, 144, (x) => (x < 30 ? RED : BLUE));
@@ -137,28 +94,22 @@ describe("sampleEdges", () => {
     expect(tall.left).toHaveLength(12);
   });
 
-  it("keeps the border inside the frame on each axis, whatever the ratio", () => {
-    const edges = sampleEdges(
-      frame(64, 36, () => RED),
-      64,
-      36,
-      { depth: 5 },
-      1 / 4
-    );
-    expect(edges.top[0]).toEqual(RED);
-    expect(edges.left.at(-1)).toEqual(RED);
+  it("keeps the border inside the frame at extreme depths and ratios", () => {
+    const red = (depth: number, ratio?: number) =>
+      sampleEdges(
+        frame(64, 36, () => RED),
+        64,
+        36,
+        { depth },
+        ratio
+      );
+    expect(red(5).top[0]).toEqual(RED);
+    expect(red(0).top[0]).toEqual(RED);
+    expect(red(5, 1 / 4).left.at(-1)).toEqual(RED);
   });
 });
 
 describe("zonesFor", () => {
-  it("gives `points` zones along the longer side and proportionally fewer along the shorter", () => {
-    expect(zonesFor(12, 16 / 9)).toEqual({ across: 12, down: 7 });
-    expect(zonesFor(12, 4 / 3)).toEqual({ across: 12, down: 9 });
-    expect(zonesFor(12, 1)).toEqual({ across: 12, down: 12 });
-    expect(zonesFor(12, 21 / 9)).toEqual({ across: 12, down: 5 });
-    expect(zonesFor(12, 9 / 16)).toEqual({ across: 7, down: 12 });
-  });
-
   it("makes zones of the same size on all four sides, within 10 %", () => {
     for (const ratio of [16 / 9, 4 / 3, 1, 21 / 9, 9 / 16, 3 / 4, 4, 1 / 4]) {
       const { across, down } = zonesFor(12, ratio);

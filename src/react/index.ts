@@ -2,15 +2,11 @@
 
 export type { Colors } from "../core/watcher.js";
 export { useColors, useColorsEvent } from "./colors.js";
-export type { GlowComponentProps } from "./glow-component.js";
-export {
-  Ambient,
-  glowComponent,
-  Halo,
-  Letterbox,
-  Theme,
+export type {
+  AmbientProps,
+  HaloProps,
+  ThemeProps,
 } from "./glow-component.js";
-export type { GlowProviderProps } from "./provider.js";
-export { GlowProvider } from "./provider.js";
-export type { GlowTargets } from "./use-glow.js";
-export { useGlow } from "./use-glow.js";
+export { Ambient, Halo, Theme } from "./glow-component.js";
+export type { LightingProviderProps } from "./provider.js";
+export { LightingProvider } from "./provider.js";

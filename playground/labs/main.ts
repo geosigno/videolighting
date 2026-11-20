@@ -5,7 +5,6 @@ import { mountAmbient } from "./ambient.js";
 import { mountBarcode } from "./barcode.js";
 import { createBus } from "./bus.js";
 import { createColorCore, type LabContext } from "./core.js";
-import { mountLetterbox } from "./letterbox.js";
 import { mountLights } from "./lights.js";
 import { mountSafety } from "./safety.js";
 import { mountScenes } from "./scenes.js";
@@ -49,12 +48,6 @@ const LABS: Lab[] = [
       "--video-primary / --video-secondary on any container. Text stays white: the colour is capped (darkened) until white on it reaches the contrast you pick. Smoothed, since a theme that blinked 25 times a second would be unusable.",
     mount: mountTheme,
     title: "Components that follow the video",
-  },
-  {
-    blurb:
-      "A 16:9 video in a tall box: the bars take the colours of its edges instead of black.",
-    mount: mountLetterbox,
-    title: "Letterbox fill",
   },
   {
     blurb:

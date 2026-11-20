@@ -1,7 +1,7 @@
 import Hls from "hls.js";
 import { createGlowWith, type Glow } from "../../src/core/glow.js";
-import { watchVideo } from "../../src/index.js";
 import { MUX_URL } from "../compat-cases.js";
+import { watchVideo } from "../internal.js";
 import "./labs.css";
 
 /**
@@ -113,9 +113,9 @@ function applySliders() {
   const factor = Number(reach?.value ?? 1);
   const strength = Number(opacity?.value ?? 0.85);
   for (const { host, variant } of cells) {
-    host.style.setProperty("--glow-reach", `${variant.reach * factor}px`);
+    host.style.setProperty("--vl-reach", `${variant.reach * factor}px`);
     host.style.setProperty(
-      "--glow-opacity",
+      "--vl-opacity",
       String(strength * (variant.strength ?? 1))
     );
   }

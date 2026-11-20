@@ -1,7 +1,7 @@
 /**
  * Finding the `<video>` an effect is about, and the element it applies to.
- * Kept free of the sampling engine so it can be tested without a browser.
- * Detection is by `tagName`, not `instanceof`, for the same reason.
+ * Shared by `effect.ts` and the React effect components, and kept free of the
+ * sampling engine. Detection is by `tagName`, not `instanceof`.
  */
 
 const isVideo = (source: unknown): source is HTMLVideoElement =>
@@ -28,12 +28,12 @@ export function locate(
   const video = resolveVideo(source);
   if (!video) {
     throw new Error(
-      "glow: no <video> found in the element passed to the effect"
+      "videolighting: no <video> found in the element passed to the effect"
     );
   }
   const target = element ?? video.parentElement;
   if (!target) {
-    throw new Error("glow: the effect needs an element to apply to");
+    throw new Error("videolighting: the effect needs an element to apply to");
   }
   return { element: target, video };
 }

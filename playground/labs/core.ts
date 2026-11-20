@@ -1,4 +1,4 @@
-import type { Rgb } from "../../src/index.js";
+import type { Rgb } from "../internal.js";
 import type { Bus } from "./bus.js";
 import { ease } from "./colors.js";
 

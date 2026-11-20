@@ -47,19 +47,29 @@ export interface WatchOptions extends EdgeLayout {
    */
   onSkip?: () => void;
   /**
+   * Asked each time the video enters or leaves the viewport (and when the
+   * returned function's `recheck` is called): whether the read may pause while
+   * the video is off screen. Default: yes. A halo is only seen around its
+   * video, so it says yes; a background or a theme can sit anywhere in the
+   * page, so it says no.
+   */
+  pauseOffScreen?: () => boolean;
+  /**
    * Read the pixels in a Web Worker (through a `VideoFrame`) so the main thread stays free. Defaults to
    * `true`; falls back to the main thread where the browser cannot do it.
    */
   worker?: boolean;
 }
 
-interface Sample {
-  colors: EdgeColors;
-  mainMs: number;
-  method: ReadMethod;
-  probe: boolean;
-  workerMs: number;
+/** The worker itself failed (blocked by a CSP, say), not the reading of a frame. */
+class WorkerFailure extends Error {
+  constructor(cause: unknown) {
+    super("videolighting: the worker failed", { cause });
+  }
 }
+
+/** What the worker replied, plus the time the main thread spent on it. */
+type Sample = SampleReply & { mainMs: number };
 
 interface Sampler {
   dispose: () => void;
@@ -152,23 +162,22 @@ function workerSampler(
   worker.onmessage = (event: MessageEvent<SampleReply>) => {
     const current = pending;
     pending = undefined;
-    current?.resolve({
-      colors: event.data.colors,
-      mainMs: current.timing.mainMs,
-      method: event.data.method,
-      probe: event.data.probe,
-      workerMs: event.data.workerMs,
-    });
+    current?.resolve({ ...event.data, mainMs: current.timing.mainMs });
   };
+  let failure: WorkerFailure | undefined;
   worker.onerror = (event) => {
+    failure = new WorkerFailure(event.error ?? new Error(event.message));
     const current = pending;
     pending = undefined;
-    current?.reject(event.error ?? new Error(event.message));
+    current?.reject(failure);
   };
 
   return {
     dispose: () => worker.terminate(),
     sample: () => {
+      if (failure) {
+        return Promise.reject(failure);
+      }
       const start = performance.now();
       // Throws a SecurityError for a video the browser refuses to expose.
       const frame = new VideoFrame(video);
@@ -205,7 +214,8 @@ const VISIBLE_MARGIN = "200px";
 
 /**
  * Sample the mean edge colors of `video` on every frame it presents, as far as
- * the main-thread budget allows, and only while it is (nearly) on screen.
+ * the main-thread budget allows, and, unless `pauseOffScreen` says otherwise,
+ * only while it is (nearly) on screen.
  * Idle while the video is paused. Returns a function that stops watching.
  */
 export function watchVideo(
@@ -216,18 +226,26 @@ export function watchVideo(
     onColors,
     onError,
     onSkip,
+    pauseOffScreen,
     points,
     worker = true,
   }: WatchOptions
-): () => void {
+): (() => void) & { recheck: () => void } {
+  if (typeof video.requestVideoFrameCallback !== "function") {
+    onError?.(
+      new Error("videolighting: this browser has no requestVideoFrameCallback")
+    );
+    return Object.assign(() => undefined, { recheck: () => undefined });
+  }
   const layout: EdgeLayout = { depth, points };
-  const sampler =
+  const first =
     (worker ? workerSampler(video, layout, method) : undefined) ??
     mainThreadSampler(video, layout);
-  if (!sampler) {
+  if (!first) {
     onError?.(new Error("2D canvas context unavailable"));
-    return () => undefined;
+    return Object.assign(() => undefined, { recheck: () => undefined });
   }
+  let sampler: Sampler = first;
 
   let stopped = false;
   let busy = false;
@@ -240,21 +258,33 @@ export function watchVideo(
   let frameHandle: number | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
 
+  /** Reading goes on while the video is on screen, or off screen if nothing needs it paused. */
+  const wanted = () => visible || !(pauseOffScreen?.() ?? true);
   const gap = () => cost / MAIN_THREAD_BUDGET;
   const ready = () => video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
 
   /** Read the current frame once the budget allows it. */
   const catchUp = () => {
-    if (timer !== undefined || stopped || !visible) {
+    if (timer !== undefined || stopped || !wanted()) {
       return;
     }
     const wait = Math.max(0, lastStart + gap() - performance.now());
     timer = setTimeout(() => {
       timer = undefined;
-      if (behind && !busy && !stopped && visible && ready()) {
+      if (behind && !busy && !stopped && wanted() && ready()) {
         run();
       }
     }, wait);
+  };
+
+  /** A worker that cannot run (a CSP blocks it, say): carry on on the main thread. */
+  const fallBack = () => {
+    sampler.dispose();
+    const next = mainThreadSampler(video, layout);
+    if (next) {
+      sampler = next;
+    }
+    return next !== undefined;
   };
 
   /** Never throws: a failure stops watching and is reported to `onError`. */
@@ -263,24 +293,18 @@ export function watchVideo(
     behind = false;
     lastStart = performance.now();
     try {
-      const {
-        colors,
-        mainMs,
-        method: used,
-        probe,
-        workerMs,
-      } = await sampler.sample();
+      const { colors, ...read } = await sampler.sample();
+      const { mainMs } = read;
       cost = cost === 0 ? mainMs : cost + (mainMs - cost) * COST_SMOOTHING;
       if (!stopped) {
-        onColors(colors, {
-          latencyMs: performance.now() - lastStart,
-          mainMs,
-          method: used,
-          probe,
-          workerMs,
-        });
+        onColors(colors, { ...read, latencyMs: performance.now() - lastStart });
       }
     } catch (error) {
+      if (error instanceof WorkerFailure && fallBack()) {
+        busy = false;
+        run();
+        return;
+      }
       // The video has no frame to hand out yet (just after `play()`, say): not
       // fatal, the next frame it presents is sampled.
       if (error instanceof DOMException && error.name === "InvalidStateError") {
@@ -300,7 +324,7 @@ export function watchVideo(
   };
 
   const onFrame: VideoFrameRequestCallback = () => {
-    if (stopped || !visible) {
+    if (stopped || !wanted()) {
       return;
     }
     // Every frame is sampled, but one at a time and within the budget: a frame
@@ -336,6 +360,20 @@ export function watchVideo(
     behind = false;
   };
 
+  /** Start or pause the read to match what is wanted now. */
+  const sync = () => {
+    if (stopped) {
+      return;
+    }
+    if (wanted()) {
+      if (frameHandle === undefined) {
+        start();
+      }
+    } else if (frameHandle !== undefined) {
+      pause();
+    }
+  };
+
   const observer =
     typeof IntersectionObserver === "undefined"
       ? undefined
@@ -346,11 +384,7 @@ export function watchVideo(
               return;
             }
             visible = next;
-            if (visible) {
-              start();
-            } else {
-              pause();
-            }
+            sync();
           },
           { rootMargin: VISIBLE_MARGIN }
         );
@@ -358,10 +392,13 @@ export function watchVideo(
 
   start();
 
-  return () => {
-    stopped = true;
-    observer?.disconnect();
-    pause();
-    sampler.dispose();
-  };
+  return Object.assign(
+    () => {
+      stopped = true;
+      observer?.disconnect();
+      pause();
+      sampler.dispose();
+    },
+    { recheck: sync }
+  );
 }

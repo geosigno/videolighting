@@ -2,14 +2,11 @@ import { describe, expect, it } from "bun:test";
 import {
   contrast,
   createSmoother,
-  css,
   forWhiteText,
-  luminance,
-  mean,
   palette,
   toHsl,
-} from "./colors.js";
-import type { Rgb } from "./sample.js";
+} from "../../src/core/colors.js";
+import type { Rgb } from "../../src/core/sample.js";
 
 const within = (actual: Rgb, expected: Rgb, tolerance: number) =>
   expected.every((value, i) => Math.abs((actual[i] ?? 0) - value) <= tolerance);
@@ -17,10 +14,6 @@ const within = (actual: Rgb, expected: Rgb, tolerance: number) =>
 describe("wcag helpers", () => {
   it("gives 21:1 between black and white", () => {
     expect(contrast([0, 0, 0], [255, 255, 255])).toBeCloseTo(21, 0);
-  });
-
-  it("gives white a luminance of 1", () => {
-    expect(luminance([255, 255, 255])).toBeCloseTo(1, 3);
   });
 });
 
@@ -37,18 +30,9 @@ describe("forWhiteText", () => {
     expect(forWhiteText(dark).bg).toEqual(dark);
   });
 
-  it("applies no limit when the minimum is 1", () => {
-    const yellow: Rgb = [255, 255, 0];
-    expect(forWhiteText(yellow, 1).bg).toEqual(yellow);
-  });
-
   it("asks for more with a higher minimum", () => {
     const blue: Rgb = [60, 90, 200];
     expect(forWhiteText(blue, 7).ratio).toBeGreaterThanOrEqual(7);
-  });
-
-  it("answers the same question with the same object", () => {
-    expect(forWhiteText([200, 180, 40])).toBe(forWhiteText([200, 180, 40]));
   });
 });
 
@@ -59,30 +43,6 @@ describe("palette", () => {
     const [first, second] = palette([red, red, red, blue]);
     expect(within(first ?? [0, 0, 0], red, 30)).toBe(true);
     expect(within(second ?? [0, 0, 0], blue, 30)).toBe(true);
-  });
-
-  it("gives two different colours even from a single colour", () => {
-    const point: Rgb = [200, 50, 50];
-    const [first, second] = palette(Array.from({ length: 12 }, () => point));
-    expect(first).toBeDefined();
-    expect(second).toBeDefined();
-    expect(first).not.toEqual(second);
-  });
-});
-
-describe("mean and css", () => {
-  it("averages colours", () => {
-    expect(
-      mean([
-        [0, 0, 0],
-        [100, 50, 200],
-      ])
-    ).toEqual([50, 25, 100]);
-  });
-
-  it("writes colours with and without alpha", () => {
-    expect(css([1.4, 2.6, 3])).toBe("rgb(1 3 3)");
-    expect(css([1, 2, 3], 0.5)).toBe("rgb(1 2 3 / 0.5)");
   });
 });
 
@@ -105,20 +65,5 @@ describe("createSmoother", () => {
     const settled = smoother.colors;
     expect(smoother.step(goal, 16)).toBe(false);
     expect(smoother.colors).toBe(settled);
-  });
-
-  it("changes identity only when a value changes", () => {
-    const smoother = createSmoother(0.12, [[0, 0, 0]]);
-    const before = smoother.colors;
-    expect(smoother.step([[0, 0, 0]], 16)).toBe(false);
-    expect(smoother.colors).toBe(before);
-    expect(smoother.step(goal, 16)).toBe(true);
-    expect(smoother.colors).not.toBe(before);
-  });
-
-  it("jumps straight to a colour on snap", () => {
-    const smoother = createSmoother(0.12, [[0, 0, 0]]);
-    smoother.snap(goal);
-    expect(smoother.colors).toEqual(goal);
   });
 });

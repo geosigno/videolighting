@@ -1,4 +1,4 @@
-import type { Rgb } from "./sample.js";
+import type { EdgeColors, Rgb } from "./sample.js";
 
 /**
  * Pure colour helpers shared by the effects. Colours are the video's own: nothing
@@ -180,17 +180,54 @@ export function palette(points: Rgb[], count = 2): Rgb[] {
   for (let round = 0; round < 6; round += 1) {
     state = refine(points, state.centres);
   }
-  const order = state.centres
+  return state.centres
     .map((c, i) => ({ c, n: state.sizes[i] ?? 0 }))
     .sort((a, b) => b.n - a.n)
     .map(({ c }) => c);
-  // Two colours that are nearly the same make a dull pair: shift the hue.
-  const [top, second] = order;
-  if (top && second && count >= 2 && distance(top, second) < 45) {
-    const [h, s, l] = toHsl(top);
-    order[1] = fromHsl([(h + 40) % 360, s, l]);
+}
+
+/** The two dominant colours keep their roles from one frame to the next. */
+function keepOrder(previous: Rgb[], next: Rgb[]): Rgb[] {
+  const [p0, p1] = previous;
+  const [n0, n1] = next;
+  if (p0 && p1 && n0 && n1) {
+    const straight = distance(p0, n0) + distance(p1, n1);
+    const crossed = distance(p0, n1) + distance(p1, n0);
+    if (crossed < straight) {
+      return [n1, n0];
+    }
   }
-  return order;
+  return next;
+}
+
+/** Whole-number channels, so a still picture gives the very same goal every sample. */
+const whole = ([r, g, b]: Rgb): Rgb => [
+  Math.round(r),
+  Math.round(g),
+  Math.round(b),
+];
+
+/**
+ * The three colours a watcher aims at: `primary`, `secondary`, `average`. The two
+ * most vivid colours of the picture when it has them (and `vibrant` allows),
+ * else the dominant colours of its edges, kept in the same order as `previous`.
+ * `secondary` falls back to `primary`, `primary` to `neutral`.
+ */
+export function pickGoal(
+  edges: EdgeColors,
+  previous: Rgb[],
+  vibrant: boolean,
+  neutral: Rgb
+): Rgb[] {
+  const points = [...edges.top, ...edges.right, ...edges.bottom, ...edges.left];
+  const [first, second] =
+    (vibrant ? edges.vivid : undefined) ??
+    keepOrder(previous, palette(points, 2));
+  return [
+    whole(first ?? neutral),
+    whole(second ?? first ?? neutral),
+    whole(mean(points)),
+  ];
 }
 
 export interface Smoother {

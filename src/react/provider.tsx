@@ -13,16 +13,16 @@ const GlowContext = createContext<GlowContextValue>({ read: {}, video: null });
 /** The provider's video and read settings, or `null` and the defaults without one. */
 export const useGlowContext = (): GlowContextValue => useContext(GlowContext);
 
-export interface GlowProviderProps {
+export interface LightingProviderProps {
   children?: ReactNode;
-  /** How the video is read: `method`, `depth`, `points`, `tau`, `worker`, `onError`. */
+  /** How the video is read: `method`, `depth`, `points`, `tau`, `vibrant`, `worker`, `onError`. */
   options?: WatcherOptions;
   video: HTMLVideoElement | null;
 }
 
 /**
  * Optional: the video and how it is read (`method`, `depth`, `points`, `tau`,
- * `worker`), once for the whole tree. A read is shared per video and set by
+ * `vibrant`, `worker`), once for the whole tree. A read is shared per video and set by
  * its first handle; every hook below holds one with these settings, so they
  * win whatever the mount order among them. Changing them restarts every hook
  * below with the new settings: their handles are released first, so the read
@@ -37,7 +37,11 @@ export interface GlowProviderProps {
  *   50 ms grace period (between the hooks' release and their restart)
  *   restarts the read with its own settings, the defaults.
  */
-export function GlowProvider({ children, options, video }: GlowProviderProps) {
+export function LightingProvider({
+  children,
+  options,
+  video,
+}: LightingProviderProps) {
   const { onError, ...settings } = options ?? {};
   const stableSettings = useShallowStable(settings);
   const stableOnError = useLatest(onError);

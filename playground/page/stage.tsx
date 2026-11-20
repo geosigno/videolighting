@@ -7,7 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Ambient, Halo, Letterbox, Theme } from "../../src/react/index.js";
+import { Ambient, Halo, Theme } from "../../src/react/index.js";
 import { MUX_URL } from "../compat-cases.js";
 import {
   countRender,
@@ -70,9 +70,8 @@ const Counted = ({ children, id }: { children: ReactNode; id: string }) => (
 );
 
 /**
- * One `<video>` and the four effects on it: the halo around the frame, the
- * letterbox inside the resizable container, the ambient on a fixed full-window
- * backdrop, the theme on a card of buttons. The components take their video
+ * One `<video>` and the three effects on it: the halo around the frame, the
+ * ambient on a fixed full-window backdrop, the theme on a card of buttons. The components take their video
  * from the provider.
  */
 export function Stage({
@@ -123,27 +122,21 @@ export function Stage({
     <div className="pg-stage" data-testid="stage">
       {on("ambient") && (
         <Counted id="ambient">
-          <Ambient className="pg-backdrop" options={{ variant }} />
+          <Ambient className="pg-backdrop" variant={variant} />
         </Counted>
       )}
       <div className="pg-frame" data-testid="frame">
         {on("halo") && (
           <Counted id="halo">
-            {/* Inline options and callback, new each render: they must restart nothing. */}
+            {/* Inline callback, new each render: it must restart nothing. */}
             <Halo
               className="pg-fill"
-              options={{
-                onError: (error) => recordComponentError("halo", error),
-              }}
+              // biome-ignore lint/performance/noJsxPropsBind: new each render on purpose
+              onError={(error) => recordComponentError("halo", error)}
             />
           </Counted>
         )}
         <div className="pg-container" data-testid="container" ref={container}>
-          {on("letterbox") && (
-            <Counted id="letterbox">
-              <Letterbox className="pg-fill" />
-            </Counted>
-          )}
           {showVideo && (
             <video
               autoPlay

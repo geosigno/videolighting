@@ -4,7 +4,7 @@ import {
   type EdgeColors,
   type SampleCost,
   watchVideo,
-} from "../src/index.js";
+} from "./internal.js";
 
 /**
  * The whole flow (sampling + glow) measured the way a page under pressure

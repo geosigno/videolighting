@@ -21,15 +21,13 @@ type Corner = (typeof CORNERS)[number];
 const BLACK: Rgb = [0, 0, 0];
 
 /** Tunables, as CSS variables with a fallback. */
-const REACH = "var(--glow-reach, 140px)";
-const OPACITY = "var(--glow-opacity, 0.85)";
+const REACH = "var(--vl-reach, 140px)";
+const OPACITY = "var(--vl-opacity, 0.85)";
 
 /** How the intensity decays: (1 - distance) ^ exponent. */
 const DEFAULT_EXPONENT = 2.5;
 /** Stops used to draw the curve. */
 const CURVE_STEPS = 10;
-/** Bands slip this far under the video, so no sub-pixel gap shows at its edge. */
-const UNDER_VIDEO_PX = 4;
 
 type Curve = (distance: number) => number;
 
@@ -91,14 +89,21 @@ const CORNER_CENTER: Record<Corner, string> = {
   topRight: "0% 100%",
 };
 
+/**
+ * The top and bottom bands also run under the video, over half its height (more
+ * than any corner radius), so a rounded video shows the glow, not a hole, in
+ * its corners. The side bands stop at the video's edge: no two bands overlap,
+ * so nothing is drawn twice there.
+ */
 function bandPosition(side: Side, inset: number): string {
   const depth = `calc(${REACH} + ${inset}px)`;
+  const deep = `calc(${REACH} + 50% + ${inset}px)`;
   const outside = `calc(-1 * ${REACH})`;
   switch (side) {
     case "top":
-      return `left:0;right:0;top:${outside};height:${depth}`;
+      return `left:0;right:0;top:${outside};height:${deep}`;
     case "bottom":
-      return `left:0;right:0;bottom:${outside};height:${depth}`;
+      return `left:0;right:0;bottom:${outside};height:${deep}`;
     case "left":
       return `top:0;bottom:0;left:${outside};width:${depth}`;
     default:
@@ -124,7 +129,7 @@ function cornerPosition(corner: Corner): string {
 // --- Painting -------------------------------------------------------------------
 
 /**
- * Mask of a band: transparent on the far side, as opaque as `--glow-opacity`
+ * Mask of a band: transparent on the far side, as opaque as `--vl-opacity`
  * at the video's edge. Stops are laid out along the band, far side first.
  */
 function maskGradient(side: Side, curve: Curve, steps: number): string {
@@ -213,7 +218,7 @@ export function createGlowWith(host: HTMLElement, config: GlowConfig): Glow {
   const withCorners = config.corners ?? true;
   const filter = blur > 0 ? `;filter:blur(${blur}px)` : "";
   // With a blur, the fade must start further under the video.
-  const inset = UNDER_VIDEO_PX + 2 * blur;
+  const inset = 2 * blur;
 
   const layer = createLayer(host);
   const { element } = layer;
@@ -275,8 +280,8 @@ export function createGlowWith(host: HTMLElement, config: GlowConfig): Glow {
 
 /**
  * Add the glow layer behind the children of `host` (the element wrapping the
- * video). Tune it with the CSS variables `--glow-reach` (how far it extends
- * from the video, default 140px) and `--glow-opacity` (at the video's edge,
+ * video). Tune it with the CSS variables `--vl-reach` (how far it extends
+ * from the video, default 140px) and `--vl-opacity` (at the video's edge,
  * default 0.85).
  */
 export function createGlow(host: HTMLElement): Glow {

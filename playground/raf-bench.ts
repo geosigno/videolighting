@@ -1,5 +1,5 @@
 import "./nav.js";
-import { createGlow, type EdgeColors, watchVideo } from "../src/index.js";
+import { createGlow, type EdgeColors, watchVideo } from "./internal.js";
 
 /**
  * Direct write vs write coalesced in requestAnimationFrame, on the real

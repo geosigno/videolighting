@@ -23,7 +23,7 @@ export default defineConfig({
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
   // A shared CI runner has bad moments: a budget missed once is retried.
   retries: process.env.CI ? 2 : 0,
-  testDir: "e2e",
+  testDir: "test/end-to-end",
   testMatch: "**/*.e2e.ts",
   timeout: 60_000,
   use: {
@@ -33,7 +33,7 @@ export default defineConfig({
     },
   },
   webServer: {
-    command: `bunx vite e2e --port ${PORT} --strictPort`,
+    command: `bunx vite test/end-to-end --port ${PORT} --strictPort`,
     reuseExistingServer: !process.env.CI,
     url: `http://localhost:${PORT}/page.html`,
   },

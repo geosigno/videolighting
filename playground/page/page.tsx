@@ -8,7 +8,7 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
-import { GlowProvider } from "../../src/react/index.js";
+import { LightingProvider } from "../../src/react/index.js";
 import { Checks, readCheckParams } from "./checks.js";
 import { Controls } from "./controls.js";
 import { installHandle, recordError } from "./handle.js";
@@ -129,9 +129,10 @@ export function Page({ start }: { start: PageStart }) {
     () => ({
       method: state.method,
       onError: recordError,
+      vibrant: state.vibrant,
       worker: !state.mainThread,
     }),
-    [state.method, state.mainThread]
+    [state.method, state.mainThread, state.vibrant]
   );
 
   // Once the Checks section re-renders the page: a new object and a new
@@ -142,7 +143,7 @@ export function Page({ start }: { start: PageStart }) {
       : options;
 
   return (
-    <GlowProvider options={providerOptions} video={video}>
+    <LightingProvider options={providerOptions} video={video}>
       <header className="pg-head">
         <h1>Glow reference page</h1>
         <Controls
@@ -179,7 +180,7 @@ export function Page({ start }: { start: PageStart }) {
         toggleAll={toggleAll}
         video={video}
       />
-    </GlowProvider>
+    </LightingProvider>
   );
 }
 
