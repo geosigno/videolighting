@@ -427,7 +427,7 @@ export const CASES: CompatCase[] = [
   },
   {
     detail:
-      "Le même flux en HLS natif, sans attribut crossorigin. Observé dans Chrome : refus de lecture (MediaError 4), cause non élucidée. À comparer sur Safari.",
+      "Le même flux en HLS natif, sans attribut crossorigin. Observé dans Chrome : refus de lecture (MediaError 4), cause non élucidée. Sur Safari (iPhone 16e, 27.2) : la vidéo joue mais ses images sont illisibles (SecurityError, vidéo « tainted »).",
     expect: "noplay",
     group: "Source réelle : démo Video.js 10 (Mux)",
     id: "mux-native",

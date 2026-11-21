@@ -330,6 +330,15 @@ Firefox creates the `VideoFrame` on the main thread, which is why its main-threa
 Safari round timers to 1 ms, so their figures are coarse. These are one machine's figures, not a promise:
 run `bun run test:e2e` on yours.
 
+**On a phone**, measured on 2026-11-21 on an iPhone 16e (iOS 27.2.1, Safari 27.2) with the compatibility page
+(`bun run dev:lan`, then `/compat.html`), on a Mux HLS stream played natively with `crossorigin`: the worker
+reads a frame with a median latency of 11 ms and no measurable main-thread cost (0 ms, p95 1 ms). Reading on
+the main thread instead costs 6 ms per sample (median). The first sample takes 80 to 300 ms, the time for the
+worker to start. Every case of the page behaved as documented in [CORS section](#before-you-use-it-cors)
+(same-origin, CORS with `crossorigin`, `MediaStream`, hls.js and native HLS were readable; without CORS they
+were blocked), except one that is not a failure: Safari plays a native HLS stream without `crossorigin`, but
+its frames cannot be read, where Chrome refuses to play it.
+
 ### Fallbacks
 
 | Situation | What happens |
