@@ -1,4 +1,9 @@
-# videoLighting
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://videolighting.geosigno.fr/media/logo-on-dark.svg">
+    <img alt="videoLighting" src="https://videolighting.geosigno.fr/media/logo-on-light.svg" width="440">
+  </picture>
+</h1>
 
 [![npm version](https://img.shields.io/npm/v/videolighting.svg)](https://www.npmjs.com/package/videolighting)
 [![npm downloads](https://img.shields.io/npm/dm/videolighting.svg)](https://www.npmjs.com/package/videolighting)
