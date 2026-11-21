@@ -1,6 +1,8 @@
 import { css, forWhiteText } from "../core/colors.js";
 import { acquire, type Effect } from "../core/effect.js";
 import { createVarWriter } from "../core/layer.js";
+import { throttle } from "../core/throttle.js";
+import type { Colors } from "../core/watcher.js";
 
 export interface ThemeOptions {
   /**
@@ -12,6 +14,16 @@ export interface ThemeOptions {
 }
 
 /**
+ * The variables are written at most every this many ms (10 times a second),
+ * not on every display frame. They are inherited: each write makes the browser
+ * work out again the style of every element under the one they are set on.
+ * Measured on a page of 777 elements under the theme (Chrome, 120 Hz screen):
+ * a write per frame cost half a core of style calculation and left gigabytes
+ * of dead style objects for the browser to collect.
+ */
+const WRITE_MS = 100;
+
+/**
  * Design tokens from the video: `--video-primary` and `--video-secondary` on
  * `element`, ready for buttons, badges and bars with white text. Use them as
  * `background: var(--video-primary)`.
@@ -20,11 +32,13 @@ export const theme: Effect<ThemeOptions> = (source, element, options) => {
   const { element: host, release, watcher } = acquire(source, element, options);
   const writer = createVarWriter(host);
   const minimum = options?.minContrast ?? 4.5;
-  const stopColors = watcher.subscribe(({ primary, secondary }) => {
+  const write = throttle(({ primary, secondary }: Colors) => {
     writer.set("--video-primary", css(forWhiteText(primary, minimum).bg));
     writer.set("--video-secondary", css(forWhiteText(secondary, minimum).bg));
-  });
+  }, WRITE_MS);
+  const stopColors = watcher.subscribe(write);
   return () => {
+    write.cancel();
     stopColors();
     writer.clear();
     release();

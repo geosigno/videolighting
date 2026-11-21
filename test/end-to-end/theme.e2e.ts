@@ -54,6 +54,31 @@ test.describe("theme", () => {
       .toBe(true);
   });
 
+  // The variables are inherited: each write restyles everything under the
+  // element, so they must not follow the display's frame rate.
+  test("writes its variables at most 10 times a second", async ({ page }) => {
+    // Red for 2 s, then blue: the colours move after each change.
+    await open(page, { effects: ["theme"], src: "/shift-360.webm" });
+    const gaps = await page.evaluate(async (host) => {
+      const times: number[] = [];
+      const element = document.querySelector(host);
+      if (!element) {
+        return [];
+      }
+      const observer = new MutationObserver(() =>
+        times.push(performance.now())
+      );
+      observer.observe(element, { attributeFilter: ["style"] });
+      await new Promise((resolve) => setTimeout(resolve, 4500));
+      observer.disconnect();
+      return times.slice(1).map((time, i) => time - (times[i] ?? 0));
+    }, THEME_HOST);
+    // It did follow the video...
+    expect(gaps.length).toBeGreaterThan(3);
+    // ...and never faster than every 100 ms (a little slack for the timers).
+    expect(Math.min(...gaps)).toBeGreaterThan(80);
+  });
+
   test("removes its variables on stop", async ({ page }) => {
     await open(page, { effects: ["theme"] });
     await expect

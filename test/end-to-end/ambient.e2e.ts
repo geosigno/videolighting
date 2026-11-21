@@ -91,6 +91,30 @@ test.describe("ambient", () => {
     expect(Math.abs(mb - 43)).toBeLessThan(40);
   });
 
+  // Each write repaints the three blobs: a soft colour does not need the
+  // display's frame rate.
+  test("blobs change colour at most 30 times a second", async ({ page }) => {
+    // Red for 2 s, then blue: the colours move after each change.
+    await open(page, { effects: ["ambient"], src: "/shift-360.webm" });
+    const gaps = await page.evaluate(async () => {
+      const times: number[] = [];
+      const layer = document.querySelector('[data-vl="ambient"]');
+      if (!layer) {
+        return [];
+      }
+      const observer = new MutationObserver(() =>
+        times.push(performance.now())
+      );
+      observer.observe(layer, { attributeFilter: ["style"] });
+      await new Promise((resolve) => setTimeout(resolve, 4500));
+      observer.disconnect();
+      return times.slice(1).map((time, i) => time - (times[i] ?? 0));
+    });
+    expect(gaps.length).toBeGreaterThan(3);
+    // Never faster than every 33 ms (a little slack for the timers).
+    expect(Math.min(...gaps)).toBeGreaterThan(25);
+  });
+
   test("drifts when motion is allowed, and stays still with reduced motion or animate: false", async ({
     page,
   }) => {

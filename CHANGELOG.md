@@ -21,6 +21,8 @@ Removed from the public API (now internal): `createGlow`, `Glow`, `watchVideo`, 
 
 ### Changes
 
+- `theme` writes its variables at most 10 times a second instead of on every display frame. They are inherited, so each write restyles everything under the themed element: on a page of 777 elements a write per frame cost half a core and gigabytes of memory in Chrome.
+- `ambient` (blobs) changes colour at most 30 times a second instead of on every display frame: each change repaints the three blobs.
 - A browser without `requestVideoFrameCallback` reports it through `onError` instead of throwing.
 - A worker blocked by a Content-Security-Policy no longer stalls the read: it carries on on the main thread.
 - Under `prefers-reduced-motion`, the halo repaints at most once a second.

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Style cost bench</title>
+    <style>
+    body {
+      margin: 0;
+      font: 14px system-ui;
+      color: #ddd;
+      background: #0c0c10;
+    }
+    #stage {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      padding: 160px 180px 60px;
+    }
+    #player {
+      width: 320px;
+    }
+    video {
+      display: block;
+      width: 100%;
+      border-radius: 12px;
+    }
+    #cards {
+      padding: 16px;
+    }
+    .block {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .card {
+      padding: 8px;
+      border: 1px solid rgb(255 255 255 / 0.1);
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgb(0 0 0 / 0.4);
+      transition: border-color 0.2s;
+    }
+    #box b {
+      color: var(--video-primary, #888);
+    }
+    #box button,
+    .themed {
+      color: #fff;
+      background: var(--video-secondary, #444);
+      border: 1px solid var(--video-primary, #888);
+      border-radius: 6px;
+    }
+    </style>
+  </head>
+  <body>
+    <!--
+      What does it cost the page when an effect writes its colours?
+      ?effects=theme,halo,ambient  which effects run (default: none, the video only)
+      ?nodes=800                   elements under the themed element
+      ?scope=page|box              theme on the whole page, or on a box of 4 elements
+      ?transport=page|consumers|sheet|sheet-page  see style-bench.ts (with consumers, fps, register, cv)
+      Measure the renderer process from outside (RSS, CPU, style recalculation).
+    -->
+    <div id="page">
+      <div id="stage">
+        <div id="player">
+          <video
+            autoplay
+            crossorigin="anonymous"
+            id="video"
+            loop
+            muted
+            playsinline
+          ></video>
+        </div>
+        <div id="box">
+          <b>themed box</b> <button type="button">button</button>
+        </div>
+        <output id="stats"></output>
+      </div>
+      <div id="cards"></div>
+    </div>
+    <script src="./style-bench.ts" type="module"></script>
+  </body>
+</html>

@@ -118,6 +118,10 @@ button {
 | --- | --- | --- |
 | `minContrast` | `4.5` | Contrast ratio white text must reach on the colour (4.5 is WCAG AA). The colour is darkened, only as much as needed, to get there. `1` leaves the video's colours as they are. |
 
+The variables are written at most 10 times a second. They are inherited, so each write makes the
+browser work out again the style of every element under the one `theme` applies to: apply it to the
+smallest element that holds what uses the colours, not to the whole page.
+
 ## Colours without rendering: `watch`
 
 `watch(video, options?)` gives the colours as data, to use as you like (your own canvas, WebGL, smart

@@ -1,7 +1,8 @@
 import { css } from "../core/colors.js";
 import { acquire, type Effect } from "../core/effect.js";
 import { createLayer, type Layer } from "../core/layer.js";
-import type { Watcher } from "../core/watcher.js";
+import { throttle } from "../core/throttle.js";
+import type { Colors, Watcher } from "../core/watcher.js";
 import { COMPOSITOR_HINTS } from "./hints.js";
 import { mountMosaic } from "./mosaic.js";
 
@@ -48,6 +49,14 @@ const BLOBS = [
   },
 ] as const;
 
+/**
+ * The blobs change colour at most every this many ms (30 times a second), not
+ * on every display frame: each write repaints the three gradients. Measured on
+ * a 120 Hz screen (Chrome): 6 points of a core less in the page's process and 8
+ * less in the GPU's, for a colour that fades over a tenth of a second anyway.
+ */
+const WRITE_MS = 33;
+
 const HINT = COMPOSITOR_HINTS ? ";will-change:transform" : "";
 
 function mountBlobs(
@@ -75,11 +84,16 @@ function mountBlobs(
     }
   }
 
-  return watcher.subscribe(({ mean, primary, secondary }) => {
+  const write = throttle(({ mean, primary, secondary }: Colors) => {
     layer.setVar("--vl-primary", css(primary));
     layer.setVar("--vl-secondary", css(secondary));
     layer.setVar("--vl-mean", css(mean));
-  });
+  }, WRITE_MS);
+  const stop = watcher.subscribe(write);
+  return () => {
+    write.cancel();
+    stop();
+  };
 }
 
 export const ambient: Effect<AmbientOptions> = (source, element, options) => {
