@@ -67,6 +67,47 @@ test.describe("halo", () => {
     expect(found).toEqual({ left: 200, opacity: "0.6" });
   });
 
+  test("corners follow the video's radius, unless the page sets --vl-radius", async ({
+    page,
+  }) => {
+    await open(page, { effects: [] });
+    const found = await page.evaluate(() => {
+      const video = document.querySelector<HTMLVideoElement>(
+        '[data-testid="video"]'
+      );
+      const host = video?.parentElement;
+      if (!(video && host && window.glowApi)) {
+        return;
+      }
+      /** Mount a halo, read what it knows of the radius and where its top band starts. */
+      const mount = () => {
+        const stop = window.glowApi?.halo(video, host);
+        const layer = host.querySelector<HTMLElement>('[data-vl="halo"]');
+        const top = layer?.children[0]?.getBoundingClientRect();
+        const box = layer?.getBoundingClientRect();
+        const read = {
+          inset: Math.round((top?.left ?? 0) - (box?.left ?? 0)),
+          variable: layer?.style.getPropertyValue("--vl-radius"),
+        };
+        stop?.();
+        return read;
+      };
+      host.style.borderRadius = "0px";
+      video.style.borderRadius = "0px";
+      const square = mount();
+      video.style.borderRadius = "24px";
+      const rounded = mount();
+      host.style.setProperty("--vl-radius", "10px");
+      const set = mount();
+      return { rounded, set, square };
+    });
+    expect(found).toEqual({
+      rounded: { inset: 24, variable: "24px" },
+      set: { inset: 10, variable: "" },
+      square: { inset: 0, variable: "0px" },
+    });
+  });
+
   test("layer is added and removed", async ({ page }) => {
     await open(page, { effects: ["halo"] });
     await expect(page.locator('[data-vl="halo"]')).toHaveCount(1);

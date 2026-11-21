@@ -231,6 +231,7 @@ stays on the client side of the boundary. Nothing runs on the server; the effect
 | --- | --- | --- |
 | `--video-primary`, `--video-secondary` | the element `theme` applies to | Colours for white text, ready for `background`. |
 | `--vl-reach`, `--vl-opacity` | the halo layer | Reach and opacity of the halo. The `reach` and `opacity` options set them on the layer, which wins over the same variables set higher up. Set them on a parent to use a length that is not in px (`calc()`, `%`, `vw`). |
+| `--vl-radius` | the halo layer | The video's corner radius, in px (or any length): the halo's corners follow the rounded shape. Read once from the video's `border-radius` (else from its element's), so you only set it when the rounding is somewhere else, such as a wrapper with `overflow: hidden`, or is not in px. A pill (radius of half the side or more) shows a step in the middle of the side. |
 | `--vl-primary`, `--vl-secondary`, `--vl-mean` | the ambient layer | The raw colours of the blobs. |
 
 Each layer is a `div` with `data-vl="halo"` or `data-vl="ambient"`, `aria-hidden="true"`,

@@ -24,3 +24,4 @@ Removed from the public API (now internal): `createGlow`, `Glow`, `watchVideo`, 
 - A browser without `requestVideoFrameCallback` reports it through `onError` instead of throwing.
 - A worker blocked by a Content-Security-Policy no longer stalls the read: it carries on on the main thread.
 - Under `prefers-reduced-motion`, the halo repaints at most once a second.
+- The halo's corners follow the video's rounded shape: the glow fades from the rounded edge, not from the bounding box, and each corner is a smooth gradient between its two bands instead of one flat colour. The radius is read once from the video's `border-radius`; set `--vl-radius` when the rounding is elsewhere.

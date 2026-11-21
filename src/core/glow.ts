@@ -4,12 +4,16 @@ import type { EdgeColors, Rgb } from "./sample.js";
 
 /**
  * The glow, as plain CSS, with no filter:
- *  - 4 bands along the video's edges, each a color gradient through the sampled
- *    colors, multiplied by a mask that fades with the distance to the video;
- *  - 4 corner patches, radial, that follow the very same fade, so the corners
- *    are round and meet the bands without a seam.
+ *  - 4 bands along the straight parts of the video's edges, each a color
+ *    gradient through the sampled colors, multiplied by a mask that fades with
+ *    the distance to the video;
+ *  - 4 corner patches, one per rounded corner: a mask centered on the center of
+ *    the corner's arc (opaque up to the radius, then the same fade), and a
+ *    conic gradient that carries the colors on from one band to the other,
+ *    the frame's corner zone being one stop on the diagonal.
  * The fade is what makes it "strong at the edge, gone further away": it is an
- * explicit curve (`falloffAlpha`), not a by-product of a blur.
+ * explicit curve (`falloffAlpha`), not a by-product of a blur. It is measured
+ * from the rounded shape, so `--vl-radius` (the video's border radius) matters.
  */
 
 const SIDES = ["top", "right", "bottom", "left"] as const;
@@ -23,6 +27,13 @@ const BLACK: Rgb = [0, 0, 0];
 /** Tunables, as CSS variables with a fallback. */
 const REACH = "var(--vl-reach, 140px)";
 const OPACITY = "var(--vl-opacity, 0.85)";
+/** The video's corner radius, clamped as the browser clamps a `border-radius`. */
+const RADIUS = "min(var(--vl-radius, 0px), 50cqmin)";
+
+/** Degrees of a corner's quarter turn that hold the corner zone's own color. */
+const PLATEAU = 45;
+/** Share of the neighboring zone in the color where a band meets a corner patch. */
+const SEAM = 0.5;
 
 /** How the intensity decays: (1 - distance) ^ exponent. */
 const DEFAULT_EXPONENT = 2.5;
@@ -57,10 +68,10 @@ export function falloffAlpha(distance: number, exponent: number): number {
   return (1 - Math.min(1, Math.max(0, distance))) ** exponent;
 }
 
-const middle = (a: Rgb, b: Rgb): Rgb => [
-  Math.round((a[0] + b[0]) / 2),
-  Math.round((a[1] + b[1]) / 2),
-  Math.round((a[2] + b[2]) / 2),
+const mix = (a: Rgb, b: Rgb, share: number): Rgb => [
+  a[0] + (b[0] - a[0]) * share,
+  a[1] + (b[1] - a[1]) * share,
+  a[2] + (b[2] - a[2]) * share,
 ];
 
 // --- Geometry -------------------------------------------------------------------
@@ -81,19 +92,24 @@ const TOWARD_VIDEO: Record<Side, string> = {
   top: "to bottom",
 };
 
-/** Where each corner's radial fade is centered (the video's corner). */
-const CORNER_CENTER: Record<Corner, string> = {
-  bottomLeft: "100% 0%",
-  bottomRight: "0% 0%",
-  topLeft: "100% 100%",
-  topRight: "0% 100%",
+/**
+ * Where the center of each corner's arc is inside its patch, and the angle
+ * (clockwise) the corner's quarter turn starts at.
+ */
+const PATCH: Record<Corner, { at: string; from: number }> = {
+  bottomLeft: { at: "100% 0%", from: 180 },
+  bottomRight: { at: "0% 0%", from: 90 },
+  topLeft: { at: "100% 100%", from: 270 },
+  topRight: { at: "0% 100%", from: 0 },
 };
 
 /**
- * The top and bottom bands also run under the video, over half its height (more
- * than any corner radius), so a rounded video shows the glow, not a hole, in
- * its corners. The side bands stop at the video's edge: no two bands overlap,
- * so nothing is drawn twice there.
+ * The bands cover the straight parts of the edges: they start where the arcs
+ * do (`--vl-radius` in from each end). The top and bottom bands also run under
+ * the video, over half its height (more than any corner radius): with the
+ * radius known that part is hidden by the video, and with no radius known a
+ * rounded video shows the glow, not a hole, in its corners. The side bands stop
+ * at the video's edge, so no two bands overlap.
  */
 function bandPosition(side: Side, inset: number): string {
   const depth = `calc(${REACH} + ${inset}px)`;
@@ -101,19 +117,20 @@ function bandPosition(side: Side, inset: number): string {
   const outside = `calc(-1 * ${REACH})`;
   switch (side) {
     case "top":
-      return `left:0;right:0;top:${outside};height:${deep}`;
+      return `left:${RADIUS};right:${RADIUS};top:${outside};height:${deep}`;
     case "bottom":
-      return `left:0;right:0;bottom:${outside};height:${deep}`;
+      return `left:${RADIUS};right:${RADIUS};bottom:${outside};height:${deep}`;
     case "left":
-      return `top:0;bottom:0;left:${outside};width:${depth}`;
+      return `top:${RADIUS};bottom:${RADIUS};left:${outside};width:${depth}`;
     default:
-      return `top:0;bottom:0;right:${outside};width:${depth}`;
+      return `top:${RADIUS};bottom:${RADIUS};right:${outside};width:${depth}`;
   }
 }
 
+/** Patches reach past the video's corner by `--vl-reach`, and cover the arc's square. */
 function cornerPosition(corner: Corner): string {
   const outside = `calc(-1 * ${REACH})`;
-  const size = `width:${REACH};height:${REACH}`;
+  const size = `width:calc(${REACH} + ${RADIUS});height:calc(${REACH} + ${RADIUS})`;
   switch (corner) {
     case "topLeft":
       return `left:${outside};top:${outside};${size}`;
@@ -145,9 +162,10 @@ function maskGradient(side: Side, curve: Curve, steps: number): string {
 }
 
 /**
- * Radial fade of a corner patch, set once: the patch itself is a plain
- * background color, rewritten on every frame (a short string), while this mask
- * shapes it with the same curve as the bands.
+ * Radial fade of a corner patch, set once: opaque up to the radius (the part of
+ * the square the rounded video does not cover), then the same curve as the
+ * bands. The patch itself is a gradient rewritten on every frame (a short
+ * string).
  */
 function cornerMask(corner: Corner, curve: Curve, steps: number): string {
   const stops: string[] = [];
@@ -155,16 +173,16 @@ function cornerMask(corner: Corner, curve: Curve, steps: number): string {
     const distance = step / steps;
     const alpha = curve(distance).toFixed(4);
     stops.push(
-      `rgb(0 0 0 / calc(${OPACITY} * ${alpha})) calc(${REACH} * ${distance.toFixed(3)})`
+      `rgb(0 0 0 / calc(${OPACITY} * ${alpha})) calc(${RADIUS} + ${REACH} * ${distance.toFixed(3)})`
     );
   }
-  return `radial-gradient(circle ${REACH} at ${CORNER_CENTER[corner]}, ${stops.join(", ")})`;
+  return `radial-gradient(circle at ${PATCH[corner].at}, ${stops.join(", ")})`;
 }
 
 /**
  * Positions of a band's color stops: 0, the center of each of the `count`
- * segments, and 1. The two ends hold the shared corner colors. Cached by count:
- * a frame that is not square has two (along the long sides and the short ones).
+ * segments, and 1. Cached by count: a frame that is not square has two (along
+ * the long sides and the short ones).
  */
 const positionCache = new Map<number, string[]>();
 
@@ -181,18 +199,34 @@ function positionsFor(count: number): string[] {
   return positions;
 }
 
+/**
+ * Paints a band and returns the colors at its two ends, where the corner
+ * patches take over. The two end zones of the frame live in the patches: the
+ * band keeps the zones in between, and starts and ends on a color half way
+ * between the corner and its neighbor. (The band spans the straight part of
+ * the edge only, so its stops are a little closer together than the zones
+ * they come from: the colors are soft enough for it not to show, and the
+ * seam with the patch is exact.)
+ */
 function paintBand(
   band: HTMLElement,
   side: Side,
   start: Rgb,
   points: Rgb[],
   end: Rgb
-) {
+): [Rgb, Rgb] {
   const positions = positionsFor(points.length);
-  const stops = [start, ...points, end].map(
-    (color, i) => `${css(color)} ${positions[i] ?? "0%"}`
-  );
+  const first = mix(start, points[1] ?? start, SEAM);
+  const last = mix(end, points.at(-2) ?? end, SEAM);
+  const stops = [
+    `${css(first)} 0%`,
+    ...points
+      .slice(1, -1)
+      .map((color, i) => `${css(color)} ${positions[i + 2] ?? "50%"}`),
+    `${css(last)} 100%`,
+  ];
   band.style.backgroundImage = `linear-gradient(${ALONG[side]}, ${stops.join(", ")})`;
+  return [first, last];
 }
 
 export interface Glow {
@@ -222,6 +256,8 @@ export function createGlowWith(host: HTMLElement, config: GlowConfig): Glow {
 
   const layer = createLayer(host);
   const { element } = layer;
+  // `cqmin` in the radius clamp is a share of the layer, i.e. of the video.
+  element.style.containerType = "size";
 
   const bands = {} as Record<Side, HTMLElement>;
   for (const side of SIDES) {
@@ -251,27 +287,56 @@ export function createGlowWith(host: HTMLElement, config: GlowConfig): Glow {
     destroy: layer.destroy,
     element,
     update: ({ bottom, left, right, top }) => {
-      // Each corner is shared by two bands: the mean of their two end samples.
-      const topLeft = middle(top.at(0) ?? BLACK, left.at(0) ?? BLACK);
-      const topRight = middle(top.at(-1) ?? BLACK, right.at(0) ?? BLACK);
-      const bottomLeft = middle(bottom.at(0) ?? BLACK, left.at(-1) ?? BLACK);
-      const bottomRight = middle(bottom.at(-1) ?? BLACK, right.at(-1) ?? BLACK);
+      // The two samples of a corner are the same zone: one color per corner.
+      const zones: Record<Corner, Rgb> = {
+        bottomLeft: mix(bottom.at(0) ?? BLACK, left.at(-1) ?? BLACK, 0.5),
+        bottomRight: mix(bottom.at(-1) ?? BLACK, right.at(-1) ?? BLACK, 0.5),
+        topLeft: mix(top.at(0) ?? BLACK, left.at(0) ?? BLACK, 0.5),
+        topRight: mix(top.at(-1) ?? BLACK, right.at(0) ?? BLACK, 0.5),
+      };
+      const [topStart, topEnd] = paintBand(
+        bands.top,
+        "top",
+        zones.topLeft,
+        top,
+        zones.topRight
+      );
+      const [rightStart, rightEnd] = paintBand(
+        bands.right,
+        "right",
+        zones.topRight,
+        right,
+        zones.bottomRight
+      );
+      const [bottomStart, bottomEnd] = paintBand(
+        bands.bottom,
+        "bottom",
+        zones.bottomLeft,
+        bottom,
+        zones.bottomRight
+      );
+      const [leftStart, leftEnd] = paintBand(
+        bands.left,
+        "left",
+        zones.topLeft,
+        left,
+        zones.bottomLeft
+      );
 
-      paintBand(bands.top, "top", topLeft, top, topRight);
-      paintBand(bands.bottom, "bottom", bottomLeft, bottom, bottomRight);
-      paintBand(bands.left, "left", topLeft, left, bottomLeft);
-      paintBand(bands.right, "right", topRight, right, bottomRight);
-
-      const cornerColors: Record<Corner, Rgb> = {
-        bottomLeft,
-        bottomRight,
-        topLeft,
-        topRight,
+      // Clockwise around each corner: the color the band before it ends on,
+      // the corner zone's own, then the color the next band starts on.
+      const seams: Record<Corner, [Rgb, Rgb]> = {
+        bottomLeft: [bottomStart, leftEnd],
+        bottomRight: [rightEnd, bottomEnd],
+        topLeft: [leftStart, topStart],
+        topRight: [topEnd, rightStart],
       };
       for (const corner of CORNERS) {
         const patch = patches[corner];
         if (patch) {
-          patch.style.backgroundColor = css(cornerColors[corner]);
+          const [before, after] = seams[corner];
+          const half = PLATEAU / 2;
+          patch.style.background = `conic-gradient(from ${PATCH[corner].from}deg at ${PATCH[corner].at}, ${css(before)} 0deg, ${css(zones[corner])} ${45 - half}deg ${45 + half}deg, ${css(after)} 90deg)`;
         }
       }
     },
