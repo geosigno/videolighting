@@ -118,9 +118,23 @@ button {
 | --- | --- | --- |
 | `minContrast` | `4.5` | Contrast ratio white text must reach on the colour (4.5 is WCAG AA). The colour is darkened, only as much as needed, to get there. `1` leaves the video's colours as they are. |
 
-The variables are written at most 10 times a second. They are inherited, so each write makes the
-browser work out again the style of every element under the one `theme` applies to: apply it to the
-smallest element that holds what uses the colours, not to the whole page.
+**Put `theme` on the elements that use the colours, not around your page.** The variables are
+inherited, so every new colour makes the browser work out again the style of every element under the
+one `theme` applies to. Around a page of 777 elements, that cost half a core of style calculation and
+gigabytes of memory in Chrome; on the few elements that use the colours, next to nothing. Several
+`theme` on the same video share one read of it:
+
+```ts
+// Don't: every element of the page is restyled on each new colour.
+theme(video, document.body);
+
+// Do: only the elements that use the colours.
+for (const element of document.querySelectorAll<HTMLElement>(".follows-video")) {
+  theme(video, element);
+}
+```
+
+The variables are written at most 10 times a second.
 
 ## Colours without rendering: `watch`
 
