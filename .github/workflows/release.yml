@@ -45,5 +45,7 @@ jobs:
           if npm view "videolighting@$version" version > /dev/null 2>&1; then
             echo "videolighting@$version is already on npm"
           else
-            npm publish
+            # npm refuses a prerelease without a tag: 1.0.0-alpha.1 goes to "alpha", 1.0.0 to "latest".
+            tag=$(node -p "require('./package.json').version.split('-')[1]?.split('.')[0] ?? 'latest'")
+            npm publish --tag "$tag"
           fi
