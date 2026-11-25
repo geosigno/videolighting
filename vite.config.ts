@@ -19,7 +19,7 @@ export default defineConfig({
     },
     rolldownOptions: {
       external: ["react", "react/jsx-runtime"],
-      // "use client" est bien conservé en tête de react.js ; on coupe l'avertissement.
+      // "use client" is kept at the top of react.js; this only silences the warning.
       onLog(level, log, handler) {
         if (log.code !== "MODULE_LEVEL_DIRECTIVE") {
           handler(level, log);
