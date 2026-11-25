@@ -1,4 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
+import { saturate } from "../../src/core/colors.js";
 import {
   channels,
   far,
@@ -8,7 +9,7 @@ import {
   VIDEO,
 } from "./helpers.js";
 
-/** The ambient background on the reference page, in both variants (blobs, mosaic). */
+/** The ambient background on the reference page, in both variants (vibrant: blobs, natural: mosaic). */
 
 /**
  * How far the mosaic leans left to right, read from its canvas pixels: the
@@ -80,15 +81,16 @@ test.describe("ambient", () => {
       )
       .toBeGreaterThan(40);
     // The mean of the clip's edges: a bit of red, more green, little blue (red,
-    // green, yellow and blue strips), unboosted.
+    // green, yellow and blue strips), with the saturation of the vibrant variant.
     const [mr = 0, mg = 0, mb = 0] = await channels(
       page,
       '[data-vl="ambient"]',
       "--vl-mean"
     );
-    expect(Math.abs(mr - 128)).toBeLessThan(40);
-    expect(Math.abs(mg - 152)).toBeLessThan(40);
-    expect(Math.abs(mb - 43)).toBeLessThan(40);
+    const [r, g, b] = saturate([128, 152, 43]);
+    expect(Math.abs(mr - r)).toBeLessThan(40);
+    expect(Math.abs(mg - g)).toBeLessThan(40);
+    expect(Math.abs(mb - b)).toBeLessThan(40);
   });
 
   // Each write repaints the three blobs: a soft colour does not need the
@@ -178,7 +180,7 @@ test.describe("ambient", () => {
   test("the mosaic follows the picture from left to right", async ({
     page,
   }) => {
-    await open(page, { effects: ["ambient"], variant: "mosaic" });
+    await open(page, { effects: ["ambient"], ambient: "natural" });
     // The clip has a red strip on one side and a blue one on the other, and swaps them every 2 s.
     const clear = (lead: { blue: number; red: number }) =>
       Math.abs(lead.red) >= 80 &&
@@ -209,7 +211,7 @@ test.describe("ambient", () => {
   test("the mosaic finishes its fade when the video is paused", async ({
     page,
   }) => {
-    await open(page, { effects: ["ambient"], variant: "mosaic" });
+    await open(page, { effects: ["ambient"], ambient: "natural" });
     // Settled on the first half of the clip (red on the left, blue on the right), paused.
     await page.evaluate(async (selector) => {
       const video = document.querySelector<HTMLVideoElement>(selector);
@@ -271,7 +273,7 @@ test.describe("ambient", () => {
     await open(page, {
       effects: ["ambient"],
       src: "/shift-360.webm",
-      variant: "mosaic",
+      ambient: "natural",
     });
     const redraws = await page.evaluate(async (selector) => {
       const video = document.querySelector<HTMLVideoElement>(selector);
@@ -307,10 +309,10 @@ test.describe("ambient", () => {
     const layers = page.locator('[data-vl="ambient"]');
     await expect(layers).toHaveCount(1);
     await expect(layers.locator("canvas")).toHaveCount(0);
-    await page.selectOption('[data-testid="variant-select"]', "mosaic");
+    await page.selectOption('[data-testid="ambient-select"]', "natural");
     await expect(layers).toHaveCount(1);
     await expect(layers.locator("canvas")).toHaveCount(1);
-    await page.selectOption('[data-testid="variant-select"]', "blobs");
+    await page.selectOption('[data-testid="ambient-select"]', "vibrant");
     await expect(layers).toHaveCount(1);
     await expect(layers.locator("canvas")).toHaveCount(0);
   });

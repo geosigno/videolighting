@@ -4,26 +4,26 @@ export type EffectName = "halo" | "ambient" | "theme";
 
 export type Aspect = "16:9" | "4:3" | "21:9" | "9:16";
 
-/** How the ambient effect draws: drifting blobs, or a blurred mosaic. */
-export type AmbientVariant = "blobs" | "mosaic";
+/** The video's own colours, drawn softly; or its most vivid ones, pushed. */
+export type Variant = "natural" | "vibrant";
 
 export interface PageState {
+  ambient: Variant;
   aspect: Aspect;
   effects: EffectName[];
+  halo: Variant;
   mainThread: boolean;
   method: MethodChoice;
   panel: boolean;
   src: string;
   strict: boolean;
-  variant: AmbientVariant;
-  /** `primary` / `secondary` are the most vivid colours (default) or the plain dominant ones. */
-  vibrant: boolean;
+  theme: Variant;
 }
 
 const EFFECT_ORDER: readonly EffectName[] = ["halo", "ambient", "theme"];
 const METHODS: readonly MethodChoice[] = ["auto", "webgl", "canvas"];
 export const ASPECTS: readonly Aspect[] = ["16:9", "4:3", "21:9", "9:16"];
-export const VARIANTS: readonly AmbientVariant[] = ["blobs", "mosaic"];
+export const VARIANTS: readonly Variant[] = ["vibrant", "natural"];
 
 /** Container size of each format: a fixed starting size, each fitting a 480 x 480 box. */
 export const ASPECT_SIZES: Record<Aspect, { height: number; width: number }> = {
@@ -34,15 +34,16 @@ export const ASPECT_SIZES: Record<Aspect, { height: number; width: number }> = {
 };
 
 export const DEFAULTS: PageState = {
+  ambient: "vibrant",
   aspect: "16:9",
   effects: [...EFFECT_ORDER],
+  halo: "vibrant",
   mainThread: false,
   method: "auto",
   panel: true,
   src: "mire.mp4",
   strict: true,
-  variant: "blobs",
-  vibrant: true,
+  theme: "vibrant",
 };
 
 function parseBool(value: string | null, fallback: boolean): boolean {
@@ -78,17 +79,19 @@ export function parseState(
   const params = new URLSearchParams(search);
   const method = params.get("method");
   const aspect = params.get("aspect");
-  const variant = params.get("variant");
+  const variant = (name: EffectName) =>
+    VARIANTS.find((v) => v === params.get(name)) ?? defaults[name];
   return {
+    ambient: variant("ambient"),
     aspect: ASPECTS.find((a) => a === aspect) ?? defaults.aspect,
     effects: parseEffects(params.get("effects"), defaults.effects),
+    halo: variant("halo"),
     mainThread: parseBool(params.get("main"), defaults.mainThread),
     method: METHODS.find((m) => m === method) ?? defaults.method,
     panel: parseBool(params.get("panel"), defaults.panel),
     src: params.get("src") || defaults.src,
     strict: parseBool(params.get("strict"), defaults.strict),
-    variant: VARIANTS.find((v) => v === variant) ?? defaults.variant,
-    vibrant: parseBool(params.get("vibrant"), defaults.vibrant),
+    theme: variant("theme"),
   };
 }
 
@@ -109,8 +112,10 @@ export function toSearch(
   if (state.aspect !== defaults.aspect) {
     params.set("aspect", state.aspect);
   }
-  if (state.variant !== defaults.variant) {
-    params.set("variant", state.variant);
+  for (const name of EFFECT_ORDER) {
+    if (state[name] !== defaults[name]) {
+      params.set(name, state[name]);
+    }
   }
   if (state.mainThread !== defaults.mainThread) {
     params.set("main", "1");
@@ -120,9 +125,6 @@ export function toSearch(
   }
   if (state.strict !== defaults.strict) {
     params.set("strict", "0");
-  }
-  if (state.vibrant !== defaults.vibrant) {
-    params.set("vibrant", state.vibrant ? "1" : "0");
   }
   const query = params.toString();
   return query ? `?${query}` : "";
@@ -145,8 +147,10 @@ export function nonDefault(
   if (state.aspect !== defaults.aspect) {
     labels.push(`format: ${state.aspect}`);
   }
-  if (state.variant !== defaults.variant) {
-    labels.push(`variant: ${state.variant}`);
+  for (const name of EFFECT_ORDER) {
+    if (state[name] !== defaults[name]) {
+      labels.push(`${name}: ${state[name]}`);
+    }
   }
   if (state.mainThread !== defaults.mainThread) {
     labels.push("main thread");
@@ -156,9 +160,6 @@ export function nonDefault(
   }
   if (state.strict !== defaults.strict) {
     labels.push("StrictMode off");
-  }
-  if (state.vibrant !== defaults.vibrant) {
-    labels.push(state.vibrant ? "vibrant" : "vibrant off");
   }
   return labels;
 }

@@ -564,3 +564,11 @@ p {
   pointer-events: none;
   opacity: 0.01;
 }
+
+/* Halo blur lab: one large player per row. */
+.halo-blur .halo-grid {
+  grid-template-columns: 1fr;
+}
+.halo-blur .halo-host {
+  width: 640px;
+}

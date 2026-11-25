@@ -26,4 +26,9 @@ Removed from the public API (now internal): `createGlow`, `Glow`, `watchVideo`, 
 - A browser without `requestVideoFrameCallback` reports it through `onError` instead of throwing.
 - A worker blocked by a Content-Security-Policy no longer stalls the read: it carries on on the main thread.
 - Under `prefers-reduced-motion`, the halo repaints at most once a second.
-- The halo's corners follow the video's rounded shape: the glow fades from the rounded edge, not from the bounding box, and each corner is a smooth gradient between its two bands instead of one flat colour. The radius is read once from the video's `border-radius`; set `--vl-radius` when the rounding is elsewhere.
+- `halo`, `ambient` and `theme` take the same `variant`, each on its own: `"vibrant"` (default: the video's strongest colours, saturation multiplied by 1.2) or `"natural"` (the video's own colours, drawn softly).
+  - `halo`: `"natural"` is new, the edge colours as one soft cloud drawn with a single CSS blur (`blur` option, `--vl-blur`).
+  - `ambient`: `"vibrant"` is the former `"blobs"`, `"natural"` the former `"mosaic"`.
+  - `theme`: `"natural"` replaces the read option `vibrant: false`, which is removed.
+- `Colors` (`watch`, `useColors`, `useColorsEvent`) is now `{ natural: { primary, secondary }, vibrant: { primary, secondary }, mean }` instead of `{ primary, secondary, mean }`.
+- The halo's corners follow the video's rounded shape: the glow fades from the rounded edge, not from the bounding box. Each corner is the colour of the frame's own corner, and the bands start and end on it. The radius is read once from the video's `border-radius`; set `--vl-radius` when the rounding is elsewhere.

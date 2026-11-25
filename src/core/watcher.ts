@@ -11,7 +11,7 @@ import type { EdgeColors, EdgeLayout, Rgb } from "./sample.js";
  * the last `destroy()` stops it (after a short grace period, so a quick
  * unmount-then-remount, React StrictMode say, does not restart it). Two streams:
  *  - `onSample`: the raw edge colours, on every sampled frame;
- *  - `subscribe`: three smoothed colours, on every display frame, only while
+ *  - `subscribe`: the smoothed colours, on every display frame, only while
  *    they are moving. The palette and the smoothing are not computed at all
  *    while nobody subscribes.
  * When the video leaves the viewport the read pauses, and so do both streams
@@ -20,22 +20,34 @@ import type { EdgeColors, EdgeLayout, Rgb } from "./sample.js";
  * `watch()` can be anywhere in the page: they keep the read going.
  */
 
+/** Two colours of the video: the main one and a second one. */
+export interface ColorPair {
+  primary: Rgb;
+  secondary: Rgb;
+}
+
 /** The video's colours, smoothed. */
 export interface Colors {
   /** Mean of the colours along the video's edges. */
   mean: Rgb;
-  /** Dominant colour, by area. */
-  primary: Rgb;
-  /** Second dominant colour, by area. */
-  secondary: Rgb;
+  /** The two dominant colours along the edges, by area, as they are. */
+  natural: ColorPair;
+  /**
+   * The two most vivid colours of the whole picture (a pink shirt on a beige
+   * scene), with their saturation pushed. The dominant ones, pushed, when the
+   * picture has nothing vivid.
+   */
+  vibrant: ColorPair;
 }
 
 const NEUTRAL_RGB: Rgb = [24, 24, 30];
+/** The five colours of a read before its first frame, in `pickGoal`'s order. */
+const STILL: Rgb[] = Array.from({ length: 5 }, () => NEUTRAL_RGB);
 /** What `state()` gives before the first frame; also a server-side snapshot. */
 export const NEUTRAL: Colors = Object.freeze({
   mean: NEUTRAL_RGB,
-  primary: NEUTRAL_RGB,
-  secondary: NEUTRAL_RGB,
+  natural: { primary: NEUTRAL_RGB, secondary: NEUTRAL_RGB },
+  vibrant: { primary: NEUTRAL_RGB, secondary: NEUTRAL_RGB },
 });
 
 export interface WatcherOptions extends EdgeLayout {
@@ -52,12 +64,6 @@ export interface WatcherOptions extends EdgeLayout {
   onError?: (error: unknown) => void;
   /** Time constant of the smoothing, in seconds. Default 0.12. */
   tau?: number;
-  /**
-   * `primary` and `secondary` are the most vivid colours of the whole picture
-   * (a pink shirt on a beige scene). `false` gives the plain dominant colours
-   * along the edges, by area, with no taste added. Default `true`.
-   */
-  vibrant?: boolean;
   /** `false` forces the main-thread engine. Default: the Worker engine. */
   worker?: boolean;
 }
@@ -158,12 +164,17 @@ function call<A extends unknown[]>(listener: (...args: A) => void, ...args: A) {
   }
 }
 
-function asColors([primary, secondary, average]: Rgb[]): Colors {
-  const fallback = primary ?? NEUTRAL_RGB;
+function asColors([
+  first = NEUTRAL_RGB,
+  second = first,
+  average = first,
+  vivid = first,
+  other = vivid,
+]: Rgb[]): Colors {
   return Object.freeze({
-    mean: average ?? fallback,
-    primary: fallback,
-    secondary: secondary ?? fallback,
+    mean: average,
+    natural: { primary: first, secondary: second },
+    vibrant: { primary: vivid, secondary: other },
   });
 }
 
@@ -173,10 +184,9 @@ export const readKey = ({
   method,
   points,
   tau,
-  vibrant,
   worker,
 }: WatcherOptions): string =>
-  JSON.stringify([depth, method, points, tau, vibrant, worker]);
+  JSON.stringify([depth, method, points, tau, worker]);
 
 function startRead(video: HTMLVideoElement, options: WatcherOptions): Shared {
   const state: Shared = {
@@ -184,7 +194,7 @@ function startRead(video: HTMLVideoElement, options: WatcherOptions): Shared {
     errorListeners: new Set(),
     failure: undefined,
     frameListeners: new Set(),
-    goal: [NEUTRAL_RGB, NEUTRAL_RGB, NEUTRAL_RGB],
+    goal: STILL,
     last: undefined,
     lastTick: 0,
     method: "canvas",
@@ -199,11 +209,7 @@ function startRead(video: HTMLVideoElement, options: WatcherOptions): Shared {
     sampleListeners: new Set(),
     samples: 0,
     skipped: 0,
-    smoother: createSmoother(options.tau ?? DEFAULT_TAU, [
-      NEUTRAL_RGB,
-      NEUTRAL_RGB,
-      NEUTRAL_RGB,
-    ]),
+    smoother: createSmoother(options.tau ?? DEFAULT_TAU, STILL),
     snapNext: true,
     stopPoster: () => undefined,
     stopRead: () => undefined,
@@ -240,12 +246,7 @@ function startRead(video: HTMLVideoElement, options: WatcherOptions): Shared {
   }
 
   const retarget = (edges: EdgeColors) => {
-    const next = pickGoal(
-      edges,
-      state.goal,
-      options.vibrant !== false,
-      NEUTRAL_RGB
-    );
+    const next = pickGoal(edges, state.goal, NEUTRAL_RGB);
     const unchanged = next.every((color, i) =>
       color.every((channel, c) => channel === state.goal[i]?.[c])
     );

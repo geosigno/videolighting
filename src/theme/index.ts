@@ -11,6 +11,12 @@ export interface ThemeOptions {
    * 1 leaves the video's colours as they are.
    */
   minContrast?: number;
+  /**
+   * `"vibrant"` (default): the two most vivid colours of the picture, with
+   * their saturation pushed. `"natural"`: the two dominant colours along the
+   * video's edges, as they are.
+   */
+  variant?: "natural" | "vibrant";
 }
 
 /**
@@ -32,7 +38,9 @@ export const theme: Effect<ThemeOptions> = (source, element, options) => {
   const { element: host, release, watcher } = acquire(source, element, options);
   const writer = createVarWriter(host);
   const minimum = options?.minContrast ?? 4.5;
-  const write = throttle(({ primary, secondary }: Colors) => {
+  const variant = options?.variant ?? "vibrant";
+  const write = throttle((colors: Colors) => {
+    const { primary, secondary } = colors[variant];
     writer.set("--video-primary", css(forWhiteText(primary, minimum).bg));
     writer.set("--video-secondary", css(forWhiteText(secondary, minimum).bg));
   }, WRITE_MS);

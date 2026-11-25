@@ -1,4 +1,4 @@
-import { css } from "../core/colors.js";
+import { css, saturate } from "../core/colors.js";
 import { acquire, type Effect } from "../core/effect.js";
 import { createLayer, type Layer } from "../core/layer.js";
 import { throttle } from "../core/throttle.js";
@@ -7,22 +7,26 @@ import { COMPOSITOR_HINTS } from "./hints.js";
 import { mountMosaic } from "./mosaic.js";
 
 export interface AmbientOptions {
-  /** Let the blobs drift. Default true, and always false under `prefers-reduced-motion`. */
+  /**
+   * `"vibrant"` only: let the blobs drift. Default true, and always false
+   * under `prefers-reduced-motion`.
+   */
   animate?: boolean;
   /**
-   * `"blobs"` (default): three soft blobs drifting slowly. `"mosaic"`: a soft
-   * picture of the video's surroundings. Not called `style`: `<Ambient style>`
-   * is already the CSS style of the React component.
+   * `"vibrant"` (default): three soft blobs in the picture's most vivid
+   * colours, saturation pushed, drifting slowly. `"natural"`: a soft picture
+   * of the video's surroundings, in its own colours. Not called `style`:
+   * `<Ambient style>` is already the CSS style of the React component.
    */
-  variant?: "blobs" | "mosaic";
+  variant?: "natural" | "vibrant";
 }
 
 /** Neutral dark base the blobs glow on. */
 const BASE = "#101018";
 
 /**
- * Three soft blobs in the video's own colours (dominant, second dominant, mean)
- * drifting slowly, like a music player's background. The colours are CSS
+ * Three soft blobs in the video's vivid colours and its mean, saturation
+ * pushed, drifting slowly, like a music player's background. The colours are CSS
  * custom properties on the layer (`--vl-primary`, `--vl-secondary`,
  * `--vl-mean`); each blob is one radial gradient from its colour to
  * transparent. A gradient with no mask measured about 40 % less GPU than a flat
@@ -84,10 +88,10 @@ function mountBlobs(
     }
   }
 
-  const write = throttle(({ mean, primary, secondary }: Colors) => {
-    layer.setVar("--vl-primary", css(primary));
-    layer.setVar("--vl-secondary", css(secondary));
-    layer.setVar("--vl-mean", css(mean));
+  const write = throttle(({ mean, vibrant }: Colors) => {
+    layer.setVar("--vl-primary", css(vibrant.primary));
+    layer.setVar("--vl-secondary", css(vibrant.secondary));
+    layer.setVar("--vl-mean", css(saturate(mean)));
   }, WRITE_MS);
   const stop = watcher.subscribe(write);
   return () => {
@@ -105,7 +109,7 @@ export const ambient: Effect<AmbientOptions> = (source, element, options) => {
     layer.element.style.contain = "paint";
   }
   const stop =
-    options?.variant === "mosaic"
+    options?.variant === "natural"
       ? mountMosaic(layer, watcher)
       : mountBlobs(layer, watcher, options);
   return () => {

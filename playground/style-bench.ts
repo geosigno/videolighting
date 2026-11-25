@@ -70,7 +70,7 @@ if (effects.includes("halo")) {
 }
 if (effects.includes("ambient")) {
   ambient(video, byId("stage"), {
-    variant: params.get("variant") === "mosaic" ? "mosaic" : "blobs",
+    variant: params.get("variant") === "natural" ? "natural" : "vibrant",
   });
 }
 if (effects.includes("theme")) {
@@ -96,7 +96,7 @@ function targets(): CSSStyleDeclaration[] {
 if (transport) {
   const styles = targets();
   let last = Number.NEGATIVE_INFINITY;
-  watch(video).subscribe(({ primary, secondary }) => {
+  watch(video).subscribe(({ vibrant: { primary, secondary } }) => {
     const now = performance.now();
     if (fps > 0 && now - last < 1000 / fps) {
       return;

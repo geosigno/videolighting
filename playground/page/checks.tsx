@@ -40,7 +40,7 @@ function ColorsDemo() {
     <div
       className="pg-swatch"
       data-testid="colors-demo"
-      style={{ background: rgb(colors.primary) }}
+      style={{ background: rgb(colors.vibrant.primary) }}
     />
   );
 }
@@ -51,7 +51,7 @@ function EventDemo({ onColors }: { onColors: (colors: Colors) => void }) {
   useColorsEvent(null, (colors) => {
     onColors(colors);
     if (swatch.current) {
-      swatch.current.style.background = rgb(colors.primary);
+      swatch.current.style.background = rgb(colors.vibrant.primary);
     }
   });
   return <div className="pg-swatch" data-testid="event-demo" ref={swatch} />;

@@ -49,7 +49,7 @@ test.describe("react layer", () => {
     }
   });
 
-  test("changing the method, the main thread or vibrant on a live video restarts the read on the same video", async ({
+  test("changing the method or the main thread on a live video restarts the read on the same video", async ({
     browserName,
     page,
   }) => {
@@ -66,26 +66,18 @@ test.describe("react layer", () => {
     await expect.poll(() => method(page)).toBe("canvas");
     expect(page.url()).toContain("method=canvas");
 
-    // The same goes for the other two options: a fresh read, its sample count
+    // The same goes for the main thread: a fresh read, its sample count
     // starting again from zero, and the colours keep coming.
     await expect
       .poll(() => samplesOf(page), { timeout: 10_000 })
       .toBeGreaterThan(40);
-    let before = await samplesOf(page);
+    const before = await samplesOf(page);
     await page.getByTestId("advanced").locator("summary").click();
     await page.getByTestId("main-thread").check();
     await expect.poll(() => samplesOf(page)).toBeLessThan(before);
     expect(page.url()).toContain("main=1");
     await expect.poll(() => samplesOf(page)).toBeGreaterThan(0);
 
-    await expect
-      .poll(() => samplesOf(page), { timeout: 10_000 })
-      .toBeGreaterThan(40);
-    before = await samplesOf(page);
-    await page.getByTestId("vibrant").uncheck();
-    await expect.poll(() => samplesOf(page)).toBeLessThan(before);
-    expect(page.url()).toContain("vibrant=0");
-    await expect.poll(() => samplesOf(page)).toBeGreaterThan(0);
     await expect
       .poll(() =>
         page

@@ -8,9 +8,9 @@ import type { EdgeColors, Rgb } from "./sample.js";
  *    gradient through the sampled colors, multiplied by a mask that fades with
  *    the distance to the video;
  *  - 4 corner patches, one per rounded corner: a mask centered on the center of
- *    the corner's arc (opaque up to the radius, then the same fade), and a
- *    conic gradient that carries the colors on from one band to the other,
- *    the frame's corner zone being one stop on the diagonal.
+ *    the corner's arc (opaque up to the radius, then the same fade), and the
+ *    frame's corner zone as one plain color. The bands start and end on that
+ *    same color, so nothing turns around a corner.
  * The fade is what makes it "strong at the edge, gone further away": it is an
  * explicit curve (`falloffAlpha`), not a by-product of a blur. It is measured
  * from the rounded shape, so `--vl-radius` (the video's border radius) matters.
@@ -30,11 +30,6 @@ const OPACITY = "var(--vl-opacity, 0.85)";
 /** The video's corner radius, clamped as the browser clamps a `border-radius`. */
 const RADIUS = "min(var(--vl-radius, 0px), 50cqmin)";
 
-/** Degrees of a corner's quarter turn that hold the corner zone's own color. */
-const PLATEAU = 45;
-/** Share of the neighboring zone in the color where a band meets a corner patch. */
-const SEAM = 0.5;
-
 /** How the intensity decays: (1 - distance) ^ exponent. */
 const DEFAULT_EXPONENT = 2.5;
 /** Stops used to draw the curve. */
@@ -43,8 +38,14 @@ const CURVE_STEPS = 10;
 type Curve = (distance: number) => number;
 
 export interface GlowConfig {
-  /** Blur radius in px applied to every piece. 0 (default): no filter at all. */
-  blur?: number;
+  /**
+   * One blur of this CSS length over the whole layer (default: no filter). The
+   * bands then run twice that far under the video, so the blur has colour to
+   * draw from on both sides of the edge. One filter for the layer, not one per
+   * piece: per piece measured three times the GPU time of the plain halo, and
+   * stalls of over a second under load.
+   */
+  blur?: string;
   /** Benchmark only: false draws the corner patches' absence (cost ablation). */
   corners?: boolean;
   /**
@@ -54,7 +55,10 @@ export interface GlowConfig {
   curve?: (distance: number) => number;
   /** Steepness of the fade. Higher: stronger at the edge, fainter tail. */
   exponent?: number;
-  /** Benchmark only: false drops the fade masks (cost ablation, ugly on purpose). */
+  /**
+   * false drops the fade masks: the pieces are plain colour as far as the
+   * reach, and the layer takes `--vl-opacity`. What `blur` is made for.
+   */
   masks?: boolean;
   /** Lab only: stops used to draw the fade (default 10). */
   steps?: number;
@@ -92,15 +96,12 @@ const TOWARD_VIDEO: Record<Side, string> = {
   top: "to bottom",
 };
 
-/**
- * Where the center of each corner's arc is inside its patch, and the angle
- * (clockwise) the corner's quarter turn starts at.
- */
-const PATCH: Record<Corner, { at: string; from: number }> = {
-  bottomLeft: { at: "100% 0%", from: 180 },
-  bottomRight: { at: "0% 0%", from: 90 },
-  topLeft: { at: "100% 100%", from: 270 },
-  topRight: { at: "0% 100%", from: 0 },
+/** Where the center of each corner's arc is inside its patch. */
+const PATCH: Record<Corner, string> = {
+  bottomLeft: "100% 0%",
+  bottomRight: "0% 0%",
+  topLeft: "100% 100%",
+  topRight: "0% 100%",
 };
 
 /**
@@ -111,9 +112,9 @@ const PATCH: Record<Corner, { at: string; from: number }> = {
  * rounded video shows the glow, not a hole, in its corners. The side bands stop
  * at the video's edge, so no two bands overlap.
  */
-function bandPosition(side: Side, inset: number): string {
-  const depth = `calc(${REACH} + ${inset}px)`;
-  const deep = `calc(${REACH} + 50% + ${inset}px)`;
+function bandPosition(side: Side, inset: string): string {
+  const depth = `calc(${REACH} + ${inset})`;
+  const deep = `calc(${REACH} + 50% + ${inset})`;
   const outside = `calc(-1 * ${REACH})`;
   switch (side) {
     case "top":
@@ -164,8 +165,7 @@ function maskGradient(side: Side, curve: Curve, steps: number): string {
 /**
  * Radial fade of a corner patch, set once: opaque up to the radius (the part of
  * the square the rounded video does not cover), then the same curve as the
- * bands. The patch itself is a gradient rewritten on every frame (a short
- * string).
+ * bands. The patch itself is one color, rewritten on every frame.
  */
 function cornerMask(corner: Corner, curve: Curve, steps: number): string {
   const stops: string[] = [];
@@ -176,7 +176,7 @@ function cornerMask(corner: Corner, curve: Curve, steps: number): string {
       `rgb(0 0 0 / calc(${OPACITY} * ${alpha})) calc(${RADIUS} + ${REACH} * ${distance.toFixed(3)})`
     );
   }
-  return `radial-gradient(circle at ${PATCH[corner].at}, ${stops.join(", ")})`;
+  return `radial-gradient(circle at ${PATCH[corner]}, ${stops.join(", ")})`;
 }
 
 /**
@@ -200,13 +200,11 @@ function positionsFor(count: number): string[] {
 }
 
 /**
- * Paints a band and returns the colors at its two ends, where the corner
- * patches take over. The two end zones of the frame live in the patches: the
- * band keeps the zones in between, and starts and ends on a color half way
- * between the corner and its neighbor. (The band spans the straight part of
- * the edge only, so its stops are a little closer together than the zones
- * they come from: the colors are soft enough for it not to show, and the
- * seam with the patch is exact.)
+ * Paints a band. The two end zones of the frame live in the corner patches:
+ * the band starts and ends on its corners' colors and keeps the zones in
+ * between. (The band spans the straight part of the edge only, so its stops
+ * are a little closer together than the zones they come from: the colors are
+ * soft enough for it not to show.)
  */
 function paintBand(
   band: HTMLElement,
@@ -214,19 +212,16 @@ function paintBand(
   start: Rgb,
   points: Rgb[],
   end: Rgb
-): [Rgb, Rgb] {
+) {
   const positions = positionsFor(points.length);
-  const first = mix(start, points[1] ?? start, SEAM);
-  const last = mix(end, points.at(-2) ?? end, SEAM);
   const stops = [
-    `${css(first)} 0%`,
+    `${css(start)} 0%`,
     ...points
       .slice(1, -1)
       .map((color, i) => `${css(color)} ${positions[i + 2] ?? "50%"}`),
-    `${css(last)} 100%`,
+    `${css(end)} 100%`,
   ];
   band.style.backgroundImage = `linear-gradient(${ALONG[side]}, ${stops.join(", ")})`;
-  return [first, last];
 }
 
 export interface Glow {
@@ -247,17 +242,27 @@ export function createGlowWith(host: HTMLElement, config: GlowConfig): Glow {
   const curve: Curve =
     config.curve ?? ((distance) => falloffAlpha(distance, exponent));
   const steps = config.steps ?? CURVE_STEPS;
-  const blur = config.blur ?? 0;
+  const { blur } = config;
   const withMasks = config.masks ?? true;
   const withCorners = config.corners ?? true;
-  const filter = blur > 0 ? `;filter:blur(${blur}px)` : "";
-  // With a blur, the fade must start further under the video.
-  const inset = 2 * blur;
+  // With a blur, the side bands must start further under the video.
+  const inset = blur ? `2 * ${blur}` : "0px";
 
   const layer = createLayer(host);
   const { element } = layer;
   // `cqmin` in the radius clamp is a share of the layer, i.e. of the video.
   element.style.containerType = "size";
+  if (blur) {
+    element.style.filter = `blur(${blur})`;
+    // Its own compositing layer, so the blur is applied to the layer as a whole.
+    // Without it, Safari sometimes repaints only the area of the bands when the
+    // colours change: a sharp rectangle inside the blur of the previous frame.
+    element.style.willChange = "filter";
+  }
+  if (!withMasks) {
+    // The masks carry the opacity; without them the layer does.
+    element.style.opacity = OPACITY;
+  }
 
   const bands = {} as Record<Side, HTMLElement>;
   for (const side of SIDES) {
@@ -266,7 +271,7 @@ export function createGlowWith(host: HTMLElement, config: GlowConfig): Glow {
     const masking = withMasks
       ? `;-webkit-mask-image:${mask};mask-image:${mask}`
       : "";
-    band.style.cssText = `position:absolute;${bandPosition(side, inset)}${masking}${filter}`;
+    band.style.cssText = `position:absolute;${bandPosition(side, inset)}${masking}`;
     element.append(band);
     bands[side] = band;
   }
@@ -278,7 +283,7 @@ export function createGlowWith(host: HTMLElement, config: GlowConfig): Glow {
     const masking = withMasks
       ? `;-webkit-mask-image:${mask};mask-image:${mask}`
       : "";
-    patch.style.cssText = `position:absolute;${cornerPosition(corner)}${masking}${filter}`;
+    patch.style.cssText = `position:absolute;${cornerPosition(corner)}${masking}`;
     element.append(patch);
     patches[corner] = patch;
   }
@@ -294,49 +299,20 @@ export function createGlowWith(host: HTMLElement, config: GlowConfig): Glow {
         topLeft: mix(top.at(0) ?? BLACK, left.at(0) ?? BLACK, 0.5),
         topRight: mix(top.at(-1) ?? BLACK, right.at(0) ?? BLACK, 0.5),
       };
-      const [topStart, topEnd] = paintBand(
-        bands.top,
-        "top",
-        zones.topLeft,
-        top,
-        zones.topRight
-      );
-      const [rightStart, rightEnd] = paintBand(
-        bands.right,
-        "right",
-        zones.topRight,
-        right,
-        zones.bottomRight
-      );
-      const [bottomStart, bottomEnd] = paintBand(
+      paintBand(bands.top, "top", zones.topLeft, top, zones.topRight);
+      paintBand(bands.right, "right", zones.topRight, right, zones.bottomRight);
+      paintBand(
         bands.bottom,
         "bottom",
         zones.bottomLeft,
         bottom,
         zones.bottomRight
       );
-      const [leftStart, leftEnd] = paintBand(
-        bands.left,
-        "left",
-        zones.topLeft,
-        left,
-        zones.bottomLeft
-      );
-
-      // Clockwise around each corner: the color the band before it ends on,
-      // the corner zone's own, then the color the next band starts on.
-      const seams: Record<Corner, [Rgb, Rgb]> = {
-        bottomLeft: [bottomStart, leftEnd],
-        bottomRight: [rightEnd, bottomEnd],
-        topLeft: [leftStart, topStart],
-        topRight: [topEnd, rightStart],
-      };
+      paintBand(bands.left, "left", zones.topLeft, left, zones.bottomLeft);
       for (const corner of CORNERS) {
         const patch = patches[corner];
         if (patch) {
-          const [before, after] = seams[corner];
-          const half = PLATEAU / 2;
-          patch.style.background = `conic-gradient(from ${PATCH[corner].from}deg at ${PATCH[corner].at}, ${css(before)} 0deg, ${css(zones[corner])} ${45 - half}deg ${45 + half}deg, ${css(after)} 90deg)`;
+          patch.style.backgroundColor = css(zones[corner]);
         }
       }
     },
@@ -351,4 +327,13 @@ export function createGlowWith(host: HTMLElement, config: GlowConfig): Glow {
  */
 export function createGlow(host: HTMLElement): Glow {
   return createGlowWith(host, {});
+}
+
+/**
+ * The blurred glow: the same bands and corners in plain colour, softened by one
+ * blur. `--vl-blur` (default 40px) is its radius, `--vl-reach` how far the
+ * colour goes before the blur, `--vl-opacity` the strength of the whole.
+ */
+export function createBlurGlow(host: HTMLElement): Glow {
+  return createGlowWith(host, { blur: "var(--vl-blur, 40px)", masks: false });
 }

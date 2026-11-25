@@ -4,6 +4,7 @@ export type { Effect, EffectOptions } from "./core/effect.js";
 export type { MethodChoice } from "./core/reader.js";
 export type { Rgb } from "./core/sample.js";
 export type {
+  ColorPair,
   Colors,
   Watcher,
   WatcherOptions,

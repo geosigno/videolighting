@@ -73,8 +73,8 @@ function addBlob(tile: HTMLElement, spec: BlobSpec) {
 /** The three smoothed colours into CSS variables on the tile, timed. */
 function followColors(tile: HTMLElement, watcher: Watcher) {
   const timer = timed((colors: ReturnType<Watcher["state"]>) => {
-    tile.style.setProperty("--p", css(colors.primary));
-    tile.style.setProperty("--s", css(colors.secondary));
+    tile.style.setProperty("--p", css(colors.vibrant.primary));
+    tile.style.setProperty("--s", css(colors.vibrant.secondary));
     tile.style.setProperty("--m", css(colors.mean));
   });
   const stop = watcher.subscribe(timer.run);
@@ -187,7 +187,9 @@ function blobsMount(mode: BlobMode): Variant["mount"] {
     });
     const timer = timed((colors: ReturnType<Watcher["state"]>) => {
       BLOB_SET.forEach((blob, i) => {
-        const color = css(colors[blob.key]);
+        const color = css(
+          blob.key === "mean" ? colors.mean : colors.vibrant[blob.key]
+        );
         const dot = dots[i];
         if (mode.gradient && mode.direct && dot) {
           dot.style.background = `radial-gradient(closest-side, ${color}, transparent)`;

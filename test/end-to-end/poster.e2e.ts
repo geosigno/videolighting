@@ -53,53 +53,51 @@ test.describe("poster", () => {
     expectColor(edges.top.at(-1) ?? [], BLUE);
   });
 
-  test("primary is the most vivid colour of the picture, unless vibrant is off", async ({
+  test("the vibrant primary is the most vivid colour of the picture, the natural one the dominant colour of its edges", async ({
     page,
   }) => {
     await open(page, { effects: [] });
     // A beige picture with a small pink patch: the edges are all beige.
-    const primary = (vibrant: boolean) =>
-      page.evaluate(async (on) => {
-        const { glowApi } = window;
-        if (!glowApi) {
-          throw new Error("no glowApi");
-        }
-        const canvas = document.createElement("canvas");
-        canvas.width = 160;
-        canvas.height = 90;
-        const draw = canvas.getContext("2d");
-        if (!draw) {
-          throw new Error("no 2d context");
-        }
-        draw.fillStyle = "#c8b9a5";
-        draw.fillRect(0, 0, 160, 90);
-        draw.fillStyle = "#f03c96";
-        draw.fillRect(60, 30, 40, 30);
-        const video = document.createElement("video");
-        video.preload = "none";
-        video.poster = canvas.toDataURL();
-        document.body.append(video);
-        const watcher = glowApi.watch(video, { vibrant: on });
-        // Colours are only worked out for someone who listens.
-        let latest = watcher.state();
-        watcher.subscribe((next) => {
-          latest = next;
-        });
-        await new Promise((resolve) => {
-          watcher.onSample(resolve);
-        });
-        // The listeners run before the colours are set: let this delivery finish.
-        await new Promise((resolve) => setTimeout(resolve));
-        const colors = latest.primary;
-        watcher.destroy();
-        video.remove();
-        return colors;
-      }, vibrant);
-    const [r = 0, g = 0, b = 0] = await primary(true);
+    const colors = await page.evaluate(async () => {
+      const { glowApi } = window;
+      if (!glowApi) {
+        throw new Error("no glowApi");
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = 160;
+      canvas.height = 90;
+      const draw = canvas.getContext("2d");
+      if (!draw) {
+        throw new Error("no 2d context");
+      }
+      draw.fillStyle = "#c8b9a5";
+      draw.fillRect(0, 0, 160, 90);
+      draw.fillStyle = "#f03c96";
+      draw.fillRect(60, 30, 40, 30);
+      const video = document.createElement("video");
+      video.preload = "none";
+      video.poster = canvas.toDataURL();
+      document.body.append(video);
+      const watcher = glowApi.watch(video);
+      // Colours are only worked out for someone who listens.
+      let latest = watcher.state();
+      watcher.subscribe((next) => {
+        latest = next;
+      });
+      await new Promise((resolve) => {
+        watcher.onSample(resolve);
+      });
+      // The listeners run before the colours are set: let this delivery finish.
+      await new Promise((resolve) => setTimeout(resolve));
+      watcher.destroy();
+      video.remove();
+      return latest;
+    });
+    const [r = 0, g = 0, b = 0] = colors.vibrant.primary;
     expect(r).toBeGreaterThan(200);
     expect(g).toBeLessThan(100);
     expect(b).toBeGreaterThan(100);
-    const [, plainGreen = 0] = await primary(false);
+    const [, plainGreen = 0] = colors.natural.primary;
     expect(plainGreen).toBeGreaterThan(150);
   });
 

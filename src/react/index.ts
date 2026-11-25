@@ -1,6 +1,6 @@
 "use client";
 
-export type { Colors } from "../core/watcher.js";
+export type { ColorPair, Colors } from "../core/watcher.js";
 export { useColors, useColorsEvent } from "./colors.js";
 export type {
   AmbientProps,

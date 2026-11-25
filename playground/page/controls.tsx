@@ -6,12 +6,12 @@ import {
 } from "react";
 import type { MethodChoice } from "../internal.js";
 import {
-  type AmbientVariant,
   ASPECTS,
   type Aspect,
   type EffectName,
   type PageState,
   VARIANTS,
+  type Variant,
 } from "./state.js";
 
 /** Local clips first (fixed resolution, honest numbers), the Mux stream last. */
@@ -78,7 +78,7 @@ export function Controls({
   );
   const onVariant = useCallback(
     (event: ChangeEvent<HTMLSelectElement>) =>
-      onChange({ variant: event.target.value as AmbientVariant }),
+      onChange({ [event.target.name]: event.target.value as Variant }),
     [onChange]
   );
   const onAspect = useCallback(
@@ -89,11 +89,6 @@ export function Controls({
   const onMainThread = useCallback(
     (event: ChangeEvent<HTMLInputElement>) =>
       onChange({ mainThread: event.target.checked }),
-    [onChange]
-  );
-  const onVibrant = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) =>
-      onChange({ vibrant: event.target.checked }),
     [onChange]
   );
   const onEffect = useCallback(
@@ -132,20 +127,23 @@ export function Controls({
           {name}
         </label>
       ))}
-      <label>
-        ambient variant{" "}
-        <select
-          data-testid="variant-select"
-          onChange={onVariant}
-          value={state.variant}
-        >
-          {VARIANTS.map((variant) => (
-            <option key={variant} value={variant}>
-              {variant}
-            </option>
-          ))}
-        </select>
-      </label>
+      {EFFECTS.map((name) => (
+        <label key={name}>
+          {name} variant{" "}
+          <select
+            data-testid={`${name}-select`}
+            name={name}
+            onChange={onVariant}
+            value={state[name]}
+          >
+            {VARIANTS.map((variant) => (
+              <option key={variant} value={variant}>
+                {variant}
+              </option>
+            ))}
+          </select>
+        </label>
+      ))}
       <fieldset className="pg-aspects">
         <legend>format</legend>
         {ASPECTS.map((aspect) => (
@@ -174,15 +172,6 @@ export function Controls({
             </option>
           ))}
         </select>
-      </label>
-      <label title="primary / secondary: the most vivid colours of the whole picture, or the plain dominant ones along the edges">
-        <input
-          checked={state.vibrant}
-          data-testid="vibrant"
-          onChange={onVibrant}
-          type="checkbox"
-        />{" "}
-        vibrant
       </label>
       <details data-testid="advanced">
         <summary>Advanced</summary>

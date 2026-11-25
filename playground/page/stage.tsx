@@ -15,10 +15,10 @@ import {
   recordLateVideo,
 } from "./handle.js";
 import {
-  type AmbientVariant,
   ASPECT_SIZES,
   type Aspect,
   type EffectName,
+  type Variant,
 } from "./state.js";
 
 /** Loads `src` in `video` (`mux`: the Video.js demo stream, through hls.js where it can) and plays it. */
@@ -75,21 +75,25 @@ const Counted = ({ children, id }: { children: ReactNode; id: string }) => (
  * from the provider.
  */
 export function Stage({
+  ambient,
   effects,
+  halo,
   lateVideoMs = 0,
   onVideo,
   preset,
   src,
-  variant,
+  theme,
   video,
 }: {
+  ambient: Variant;
   effects: EffectName[];
+  halo: Variant;
   lateVideoMs?: number;
   onVideo: (video: HTMLVideoElement | null) => void;
   /** The format last chosen: a new object on every choice, even of the same one. */
   preset: { aspect: Aspect };
   src: string;
-  variant: AmbientVariant;
+  theme: Variant;
   video: HTMLVideoElement | null;
 }) {
   useSource(video, src);
@@ -122,7 +126,7 @@ export function Stage({
     <div className="pg-stage" data-testid="stage">
       {on("ambient") && (
         <Counted id="ambient">
-          <Ambient className="pg-backdrop" variant={variant} />
+          <Ambient className="pg-backdrop" variant={ambient} />
         </Counted>
       )}
       <div className="pg-frame" data-testid="frame">
@@ -133,6 +137,7 @@ export function Stage({
               className="pg-fill"
               // biome-ignore lint/performance/noJsxPropsBind: new each render on purpose
               onError={(error) => recordComponentError("halo", error)}
+              variant={halo}
             />
           </Counted>
         )}
@@ -152,7 +157,9 @@ export function Stage({
       <section className="pg-card" data-testid="theme-card">
         {on("theme") ? (
           <Counted id="theme">
-            <Theme className="pg-buttons">{buttons}</Theme>
+            <Theme className="pg-buttons" variant={theme}>
+              {buttons}
+            </Theme>
           </Counted>
         ) : (
           <div className="pg-buttons">{buttons}</div>

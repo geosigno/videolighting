@@ -5,7 +5,8 @@
 //     --width 1400 --height 1000 "none=effects=" "blobs=effects=ambient"
 //
 // Each `name=query` is the playground page opened with that query (plus
-// `panel=0&strict=0&src=mire.mp4`). Runs are interleaved, one fresh page each:
+// `panel=0&strict=0&src=mire.mp4`). `--path /labs/halo-blur.html` measures
+// another page, as long as it sets `window.glowPage.ready()`. Runs are interleaved, one fresh page each:
 // 4 s of warm-up, then 6 s measured. Everything is per second of display.
 // This is a tool for performance work, not a test: GPU numbers move by up to
 // +-20 ms/s between two identical runs, so only large gaps mean something.
@@ -18,6 +19,7 @@ const SPAN_MS = 6000;
 function parse(argv) {
   const options = {
     height: 1000,
+    path: "/",
     runs: 3,
     url: "http://localhost:5173",
     width: 1400,
@@ -25,6 +27,7 @@ function parse(argv) {
   const variants = [];
   const flags = {
     "--height": "height",
+    "--path": "path",
     "--runs": "runs",
     "--url": "url",
     "--width": "width",
@@ -34,7 +37,7 @@ function parse(argv) {
     const key = flags[arg];
     if (key) {
       const value = argv[i + 1];
-      options[key] = key === "url" ? value : Number(value);
+      options[key] = key === "url" || key === "path" ? value : Number(value);
       i += 1;
     } else {
       const split = arg.indexOf("=");
@@ -54,9 +57,11 @@ const sum = (events, test) =>
   );
 
 async function measure(chrome, settings, variant) {
-  const { height, url, width } = settings;
+  const { height, path, url, width } = settings;
   const page = await chrome.newPage({ viewport: { height, width } });
-  await page.goto(`${url}/?panel=0&strict=0&src=mire.mp4&${variant.query}`);
+  await page.goto(
+    `${url}${path}?panel=0&strict=0&src=mire.mp4&${variant.query}`
+  );
   await page.waitForFunction(() => Boolean(window.glowPage));
   await page.evaluate(() => window.glowPage.ready());
   const cdp = await page.context().newCDPSession(page);

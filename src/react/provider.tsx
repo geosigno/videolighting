@@ -15,14 +15,14 @@ export const useGlowContext = (): GlowContextValue => useContext(GlowContext);
 
 export interface LightingProviderProps {
   children?: ReactNode;
-  /** How the video is read: `method`, `depth`, `points`, `tau`, `vibrant`, `worker`, `onError`. */
+  /** How the video is read: `method`, `depth`, `points`, `tau`, `worker`, `onError`. */
   options?: WatcherOptions;
   video: HTMLVideoElement | null;
 }
 
 /**
  * Optional: the video and how it is read (`method`, `depth`, `points`, `tau`,
- * `vibrant`, `worker`), once for the whole tree. A read is shared per video and set by
+ * `worker`), once for the whole tree. A read is shared per video and set by
  * its first handle; every hook below holds one with these settings, so they
  * win whatever the mount order among them. Changing them restarts every hook
  * below with the new settings: their handles are released first, so the read

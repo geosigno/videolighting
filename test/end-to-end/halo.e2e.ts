@@ -67,6 +67,48 @@ test.describe("halo", () => {
     expect(found).toEqual({ left: 200, opacity: "0.6" });
   });
 
+  test("the natural variant is one blurred layer, tuned by blur, reach and opacity", async ({
+    page,
+  }) => {
+    await open(page, { effects: [] });
+    const found = await page.evaluate(() => {
+      const video = document.querySelector<HTMLVideoElement>(
+        '[data-testid="video"]'
+      );
+      const host = video?.parentElement;
+      const api = window.glowApi;
+      if (!(video && host && api)) {
+        return;
+      }
+      const read = (options: { blur?: number; reach?: number }) => {
+        const stop = api.halo(video, host, {
+          ...options,
+          variant: "natural",
+        });
+        const layer = host.querySelector<HTMLElement>('[data-vl="halo"]');
+        const style = layer ? getComputedStyle(layer) : undefined;
+        const result = {
+          filter: style?.filter,
+          // The left band: the reach outside, twice the blur under the video.
+          left: layer?.children[3]?.getBoundingClientRect().width,
+          opacity: style?.opacity,
+          // No piece has a filter or a mask of its own.
+          pieces: Array.from(layer?.children ?? []).filter((piece) => {
+            const own = getComputedStyle(piece);
+            return own.filter !== "none" || own.maskImage !== "none";
+          }).length,
+        };
+        stop();
+        return result;
+      };
+      return [read({}), read({ blur: 10, reach: 30 })];
+    });
+    expect(found).toEqual([
+      { filter: "blur(40px)", left: 100, opacity: "0.85", pieces: 0 },
+      { filter: "blur(10px)", left: 50, opacity: "0.85", pieces: 0 },
+    ]);
+  });
+
   test("corners follow the video's radius, unless the page sets --vl-radius", async ({
     page,
   }) => {

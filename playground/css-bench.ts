@@ -84,7 +84,17 @@ const VARIANTS: Variant[] = [
     perf: true,
   },
   {
-    create: (host) => createGlowWith(host, { blur: 8 }),
+    create: (host) => {
+      const glow = createGlowWith(host, { blur: "40px", masks: false });
+      glow.element.style.setProperty("--vl-reach", "20px");
+      return glow;
+    },
+    id: "blur-group",
+    label: "Halo natural : bandes + coins unis, sans masques, 1 flou 40px",
+    perf: true,
+  },
+  {
+    create: (host) => createGlowWith(host, { blur: "8px" }),
     id: "falloff-blur8",
     label: "Nouveau + flou 8px",
     perf: true,
@@ -100,7 +110,7 @@ const VARIANTS: Variant[] = [
     label: "Décroissance concentrée (exposant 4)",
   },
   {
-    create: (host) => createGlowWith(host, { blur: 24 }),
+    create: (host) => createGlowWith(host, { blur: "24px" }),
     id: "falloff-blur24",
     label: "Nouveau + flou 24px (mesuré : inutilisable, 2 glows max)",
   },

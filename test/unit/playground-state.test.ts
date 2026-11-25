@@ -15,15 +15,16 @@ describe("page state in the URL", () => {
     { ...DEFAULTS, effects: ["ambient", "theme"], method: "webgl" },
     { ...DEFAULTS, aspect: "21:9" },
     {
+      ambient: "natural",
       aspect: "9:16",
       effects: ["theme"],
+      halo: "natural",
       mainThread: true,
       method: "canvas",
       panel: false,
       src: "https://a.b/c d.mp4?x=1&y=2",
       strict: false,
-      variant: "mosaic",
-      vibrant: false,
+      theme: "natural",
     },
   ];
 
@@ -37,7 +38,7 @@ describe("page state in the URL", () => {
     expect(parseState("")).toEqual(DEFAULTS);
     expect(parseState("?method=foo").method).toBe("auto");
     expect(parseState("?aspect=1:1").aspect).toBe("16:9");
-    expect(parseState("?variant=nope").variant).toBe("blobs");
+    expect(parseState("?ambient=nope").ambient).toBe("vibrant");
     // Booleans are 1 or 0 only.
     expect(parseState("?main=true").mainThread).toBe(false);
     expect(parseState("?panel=false").panel).toBe(true);

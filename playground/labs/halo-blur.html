@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Glow halo blur lab</title>
+  </head>
+  <body class="halo-blur">
+    <header class="top">
+      <h1>Halo: vibrant and natural</h1>
+      <p>
+        The two drawings of the halo on the same edge colours. The sliders set
+        the blur, the spread and the opacity of the natural one.
+      </p>
+      <div class="controls inline">
+        <label
+          >source
+          <select id="source">
+            <option value="mux">Video.js demo (Mux)</option>
+            <option value="/static.mp4">static edges</option>
+            <option value="/mire.mp4">mire</option>
+          </select>
+        </label>
+        <label
+          >blur <output id="blur-out"></output> px
+          <input id="blur" max="120" min="0" step="2" type="range" value="40">
+        </label>
+        <label
+          >spread <output id="spread-out"></output> px
+          <input id="spread" max="140" min="0" step="2" type="range" value="20">
+        </label>
+        <label
+          >opacity <output id="opacity-out"></output>
+          <input
+            id="opacity"
+            max="1"
+            min="0.1"
+            step="0.05"
+            type="range"
+            value="0.85"
+          >
+        </label>
+      </div>
+    </header>
+    <video autoplay class="offscreen" id="video" loop muted playsinline></video>
+    <main class="halo-grid" id="grid"></main>
+    <script src="./halo-blur.ts" type="module"></script>
+  </body>
+</html>

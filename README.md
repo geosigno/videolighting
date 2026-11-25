@@ -11,15 +11,15 @@
 [![minzipped size](https://img.shields.io/bundlephobia/minzip/videolighting.svg)](https://bundlephobia.com/package/videolighting)
 [![license](https://img.shields.io/npm/l/videolighting.svg)](./LICENSE)
 
-Reads the colours along the edges of a `<video>` and uses them: a **halo** around the player,
-an **ambient** background, **CSS variables** for your UI, or the raw colours for anything else.
-No dependency, ESM, TypeScript types included, React bindings optional.
+videolighting makes a page pick up the colours of the video it plays. It can put a glow around the
+player, paint the background behind it, or pass the colours to your CSS so your buttons match the
+picture. It has no dependencies and ships its own types. The React components are optional.
 
 Demo and documentation: <https://videolighting.geosigno.fr/>
 
-- [Install](#install) · [Quick start](#quick-start) · [Effects](#effects) · [Colours without rendering](#colours-without-rendering-watch)
-- [React](#react) · [CSS reference](#css-reference) · [Before you use it: CORS](#before-you-use-it-cors)
-- [Behaviour](#behaviour) · [Browser support](#browser-support) · [How it works](#how-it-works) · [API summary](#api-summary)
+- [Install](#install) · [Quick start](#quick-start) · [Effects](#effects) · [Reading the colours yourself](#reading-the-colours-yourself)
+- [React](#react) · [CSS reference](#css-reference) · [CORS](#cors)
+- [Behaviour](#behaviour) · [Browser support](#browser-support) · [How it works](#how-it-works)
 
 ## Install
 
@@ -30,11 +30,11 @@ pnpm add videolighting
 bun add videolighting
 ```
 
-ESM only. `videolighting/react` needs `react >= 18` (optional peer dependency).
+The package is ESM only. `videolighting/react` needs `react >= 18`, as an optional peer dependency.
 
 ## Quick start
 
-Vanilla:
+Without a framework:
 
 ```ts
 import { halo } from "videolighting";
@@ -43,7 +43,7 @@ const video = document.querySelector("video")!;
 const stop = halo(video); // call stop() to remove it
 ```
 
-React:
+With React:
 
 ```tsx
 import { Halo } from "videolighting/react";
@@ -53,53 +53,79 @@ import { Halo } from "videolighting/react";
 </Halo>
 ```
 
-Both need the browser to be allowed to read the video's pixels: see [CORS](#before-you-use-it-cors).
+In both cases the browser has to be allowed to read the video's pixels. If your video comes from
+another domain, read the [CORS](#cors) section first.
 
 ## Effects
 
-Every effect has the same shape: `effect(video, element?, options?)`, and returns a function that stops it.
+There are three effects, and they are all called the same way: `effect(video, element?, options?)`.
+Each returns a function that stops it.
 
-- `video`: the `<video>`, or an element that contains one (the first `<video>` inside is used).
-- `element`: where the effect applies. Default: the video's parent.
-- `options`: the effect's own settings, plus `onError` (see [Errors](#errors)).
+- `video` is the `<video>`, or an element that contains one. In that case the first `<video>` inside is used.
+- `element` is where the effect applies. By default it is the video's parent.
+- `options` are the effect's own settings, plus `onError` (see [Errors](#errors)).
 
-Several effects on the same video share a single read of its frames.
+You can run several effects on the same video. They share a single read of its frames.
 
-### `halo`: colour bands around the video
+### Variants
+
+Every effect has a `variant` option with the same two values. You choose it per effect, so two
+effects on the same video can use different ones.
+
+| | `"vibrant"` (default) | `"natural"` |
+| --- | --- | --- |
+| In short | The video's strongest colours, with extra saturation. | The video's real colours, drawn softly. |
+| `halo` | Bands of colour that fade away from each edge of the video. | One soft blurred glow around the video. |
+| `ambient` | Three soft blobs that drift slowly, in the picture's most vivid colours. | A blurred picture of what is around the edges of the video. |
+| `theme` | The two most vivid colours anywhere in the picture, such as a pink shirt in a beige scene. | The two colours that cover the most area along the edges. |
+
+`vibrant` boosts saturation by 20% in all three effects. Greys are left alone, so a dull scene
+doesn't turn neon. `natural` uses the colours exactly as they are in the video.
+
+### Halo
+
+A glow around the video, in the colours of its edges.
 
 ```ts
 import { halo } from "videolighting";
 
 halo(video);
 halo(video, undefined, { reach: 200, opacity: 0.6 });
+halo(video, undefined, { variant: "natural" });
 ```
 
 | Option | Default | |
 | --- | --- | --- |
-| `reach` | `140` | How far the bands reach from the video, in px. |
-| `opacity` | `0.85` | Strength of the bands at the video's edge, 0 to 1. |
+| `variant` | `"vibrant"` | `"vibrant"` or `"natural"`. See [Variants](#variants). |
+| `reach` | `140` | How far the bands reach from the video, in px. With `"natural"` it is how far the colour goes before the blur spreads it, and the default is `20`. |
+| `opacity` | `0.85` | Strength of the halo at the video's edge, from 0 to 1. |
+| `blur` | `40` | Radius of the blur, in px. Only used by `"natural"`. |
 
-It draws every sampled frame as it comes (raw edge colours, no smoothing). Under
-`prefers-reduced-motion` it repaints at most once a second. For a reach that is not in px, set
-`--vl-reach` in CSS instead (see [CSS reference](#css-reference)).
+The halo is redrawn on every frame that is read, with no smoothing. If the user asked for reduced
+motion, it is redrawn at most once a second. For a reach that isn't in px, set `--vl-reach` in CSS
+instead (see the [CSS reference](#css-reference)).
 
-### `ambient`: a background in the video's colours
+### Ambient
+
+A background in the video's colours.
 
 ```ts
 import { ambient } from "videolighting";
 
 ambient(video);
-ambient(video, undefined, { variant: "mosaic" });
+ambient(video, undefined, { variant: "natural" });
 ```
 
 | Option | Default | |
 | --- | --- | --- |
-| `variant` | `"blobs"` | `"blobs"`: three soft blobs in the video's dominant, second and mean colours, drifting slowly. `"mosaic"`: a soft picture of the video's surroundings. |
-| `animate` | `true` | Let the blobs drift. Always `false` under `prefers-reduced-motion`. |
+| `variant` | `"vibrant"` | `"vibrant"` or `"natural"`. See [Variants](#variants). |
+| `animate` | `true` | Lets the blobs of `"vibrant"` drift. It is always off when the user asked for reduced motion. |
 
 The layer sits behind the video, over a dark base (`#101018`).
 
-### `theme`: CSS variables for your UI
+### Theme
+
+CSS variables for your own UI.
 
 ```ts
 import { theme } from "videolighting";
@@ -116,68 +142,69 @@ button {
 
 | Option | Default | |
 | --- | --- | --- |
-| `minContrast` | `4.5` | Contrast ratio white text must reach on the colour (4.5 is WCAG AA). The colour is darkened, only as much as needed, to get there. `1` leaves the video's colours as they are. |
+| `variant` | `"vibrant"` | `"vibrant"` or `"natural"`. See [Variants](#variants). |
+| `minContrast` | `4.5` | The contrast ratio white text must reach on the colour. 4.5 is WCAG AA. The colour is darkened just enough to get there. Use `1` to keep the video's colours untouched. |
 
-**Put `theme` on the elements that use the colours, not around your page.** The variables are
-inherited, so every new colour makes the browser work out again the style of every element under the
-one `theme` applies to. Around a page of 777 elements, that cost half a core of style calculation and
-gigabytes of memory in Chrome; on the few elements that use the colours, next to nothing. Several
-`theme` on the same video share one read of it:
+Apply `theme` to the elements that actually use the colours, not to `<body>`. CSS variables are
+inherited, so every colour change makes the browser restyle everything underneath. On a large page
+this gets expensive: we measured half a CPU core and gigabytes of memory in Chrome on a page of 777
+elements. On the few elements that use the colours, the cost is next to nothing.
 
 ```ts
-// Don't: every element of the page is restyled on each new colour.
+// Slow: the whole page is restyled on each new colour.
 theme(video, document.body);
 
-// Do: only the elements that use the colours.
+// Fast: only the elements that use the colours.
 for (const element of document.querySelectorAll<HTMLElement>(".follows-video")) {
   theme(video, element);
 }
 ```
 
-The variables are written at most 10 times a second.
+Calling `theme` several times on the same video still reads it only once. The variables are written
+at most 10 times a second.
 
-## Colours without rendering: `watch`
+## Reading the colours yourself
 
-`watch(video, options?)` gives the colours as data, to use as you like (your own canvas, WebGL, smart
-lights…). It renders nothing.
+`watch(video, options?)` gives you the colours as data and draws nothing. Use it for your own canvas,
+WebGL, smart lights, or anything else.
 
 ```ts
 import { watch } from "videolighting";
 
 const watcher = watch(video);
-const stopListening = watcher.subscribe(({ primary, secondary, mean }) => {
-  // each is [r, g, b], 0 to 255
+const stopListening = watcher.subscribe(({ natural, vibrant, mean }) => {
+  // natural.primary, vibrant.secondary, mean… each is [r, g, b], from 0 to 255
 });
 
-watcher.state(); // the colours now
+watcher.state(); // the current colours
 watcher.destroy(); // release this handle
 ```
 
-- `subscribe(listener)`: the smoothed colours, on every display frame while they move, and once right away with the current ones. Returns the unsubscribe function.
-- `onSample(listener)`: the raw edge colours of every sampled frame (`{ top, right, bottom, left }`, arrays of `[r, g, b]`).
-- `state()`: the smoothed colours now. The same object until they change.
-- `stats()`: `{ method, references, samples, skipped, watcherMs }`, for diagnostics.
-- `destroy()`: release this handle. The read stops 50 ms after the last handle is released (so that a quick unmount and remount does not restart it).
+- `subscribe(listener)` calls you with the smoothed colours on every display frame while they are changing, and once straight away with the current ones. It returns the function that unsubscribes.
+- `onSample(listener)` calls you with the raw edge colours of every frame that is read, as `{ top, right, bottom, left }`, each an array of `[r, g, b]`.
+- `state()` returns the current smoothed colours. You get the same object until they change.
+- `stats()` returns `{ method, references, samples, skipped, watcherMs }`, for diagnostics.
+- `destroy()` releases this handle. Reading stops 50 ms after the last handle is released, so a quick unmount and remount doesn't restart it.
 
-`Colors`:
+The colours you receive:
 
 | | |
 | --- | --- |
-| `mean` | Mean of the colours along the video's edges. |
-| `primary` | Dominant colour, by area. |
-| `secondary` | Second dominant colour, by area. |
+| `mean` | The average colour along the video's edges. |
+| `natural` | `{ primary, secondary }`, the two colours that cover the most area along the edges, unchanged. |
+| `vibrant` | `{ primary, secondary }`, the two most vivid colours anywhere in the picture, with extra saturation. When the picture has nothing vivid, these are the `natural` ones with extra saturation. |
 
-Options (the read is shared per video: **the first handle's options win**, the following ones are ignored):
+A video is read once, however many handles it has. The options of the first handle are the ones
+used, and those of later handles are ignored.
 
 | Option | Default | |
 | --- | --- | --- |
 | `tau` | `0.12` | Time constant of the smoothing, in seconds. |
-| `vibrant` | `true` | `primary` and `secondary` are the most vivid colours of the whole picture (a pink shirt on a beige scene). `false` gives the plain dominant colours along the edges, by area. |
-| `depth` | `0.15` | Depth of the sampled border, as a share of the frame's smaller side. |
-| `points` | `12` | Colours read along the longer sides (the shorter sides get proportionally fewer). |
-| `method` | `"auto"` | `"auto"` measures WebGL and canvas on your device and picks; `"webgl"` or `"canvas"` force one. |
-| `worker` | `true` | `false` reads on the main thread (slower, always works). |
-| `aroundVideo` | `false` | Set it for a handle that only draws around the video: see [Off screen](#off-screen). |
+| `depth` | `0.15` | How deep into the frame the border is sampled, as a share of the frame's smaller side. |
+| `points` | `12` | How many colours are read along the longer sides. The shorter sides get proportionally fewer. |
+| `method` | `"auto"` | `"auto"` times WebGL and canvas on the device and picks the faster. `"webgl"` and `"canvas"` force one. |
+| `worker` | `true` | Set it to `false` to read on the main thread. That is slower but always works. |
+| `aroundVideo` | `false` | Set it for a handle that only draws around the video. See [Off screen](#off-screen). |
 | `onError` | | See [Errors](#errors). |
 
 ## React
@@ -188,14 +215,14 @@ import { Ambient, Halo, LightingProvider, Theme, useColors } from "videolighting
 
 ### Components
 
-`Halo`, `Ambient` and `Theme` render an element and run their effect on it. They take the effect's
-options as props, plus:
+`Halo`, `Ambient` and `Theme` each render an element and run their effect on it. They take the
+effect's options as props, plus these:
 
 | Prop | Default | |
 | --- | --- | --- |
-| `as` | `"div"` | The element rendered. |
+| `as` | `"div"` | The element to render. |
 | `className`, `style`, `children` | | As on any element. |
-| `video` | the provider's video, else the first `<video>` among the children | Pass a `HTMLVideoElement` to use another. |
+| `video` | the provider's video, or else the first `<video>` among the children | Pass an `HTMLVideoElement` to use another one. |
 | `onError` | | See [Errors](#errors). |
 
 ```tsx
@@ -203,7 +230,7 @@ options as props, plus:
   <video src="/a.mp4" crossOrigin="anonymous" />
 </Halo>
 
-<Ambient variant="mosaic">
+<Ambient variant="natural">
   <video src="/a.mp4" crossOrigin="anonymous" />
 </Ambient>
 
@@ -213,9 +240,11 @@ options as props, plus:
 </Theme>
 ```
 
-A video that arrives late or is swapped among the children is picked up.
+If the video is added later or replaced among the children, the component picks up the new one.
 
-### `LightingProvider`: one video and one set of read options for a tree
+### Sharing one video across components
+
+`LightingProvider` gives a whole tree the same video and the same read options.
 
 ```tsx
 const [video, setVideo] = useState<HTMLVideoElement | null>(null);
@@ -226,69 +255,71 @@ const [video, setVideo] = useState<HTMLVideoElement | null>(null);
 </LightingProvider>
 ```
 
-`options` takes the read options of [`watch`](#colours-without-rendering-watch)
-and `onError`. They hold only while **every** handle on that video lives under the provider: a
-vanilla `halo(video)` or a `useColors(video)` outside the provider keeps the read alive with its own
-settings.
+`options` takes the read options of [`watch`](#reading-the-colours-yourself) and `onError`. They
+only apply while everything that reads this video is under the provider. A plain `halo(video)` or a
+`useColors(video)` outside it keeps the read going with its own settings.
 
 ### Hooks
 
 ```tsx
 function Title({ video }: { video: HTMLVideoElement | null }) {
-  const { primary } = useColors(video, { maxFps: 15 });
-  return <h1 style={{ color: `rgb(${primary.join(",")})` }}>…</h1>;
+  const { vibrant } = useColors(video, { maxFps: 15 });
+  return <h1 style={{ color: `rgb(${vibrant.primary.join(",")})` }}>…</h1>;
 }
 ```
 
-- `useColors(video?, { maxFps? })`: the smoothed colours as React state. One render per display frame while they move, at most `maxFps` per second when given. Without `video`, the provider's. Before the first frame, and on the server, it gives a neutral dark colour.
-- `useColorsEvent(video, callback)`: calls `callback` with the colours on every display frame, **without rendering**: for what animates (a canvas, a CSS variable). A new `callback` on each render does not resubscribe.
+- `useColors(video?, { maxFps? })` returns the smoothed colours as React state. The component renders once per display frame while they are changing, or at most `maxFps` times a second if you set it. Without `video` it uses the provider's. Before the first frame, and on the server, it returns a neutral dark colour.
+- `useColorsEvent(video, callback)` calls `callback` with the colours on every display frame without rendering the component. Use it for things that animate, such as a canvas or a CSS variable. Passing a new `callback` on each render doesn't resubscribe.
 
 ### Server Components and SSR
 
-`videolighting/react` is a client module (`"use client"`). Import it from Server Components as usual: it
-stays on the client side of the boundary. Nothing runs on the server; the effects start after mount.
+`videolighting/react` is a client module (`"use client"`). You can import it from Server Components
+as usual, and it stays on the client side of the boundary. Nothing runs on the server. The effects
+start after mount.
 
 ## CSS reference
 
 | Name | Set on | Meaning |
 | --- | --- | --- |
-| `--video-primary`, `--video-secondary` | the element `theme` applies to | Colours for white text, ready for `background`. |
-| `--vl-reach`, `--vl-opacity` | the halo layer | Reach and opacity of the halo. The `reach` and `opacity` options set them on the layer, which wins over the same variables set higher up. Set them on a parent to use a length that is not in px (`calc()`, `%`, `vw`). |
-| `--vl-radius` | the halo layer | The video's corner radius, in px (or any length): the halo's corners follow the rounded shape. Read once from the video's `border-radius` (else from its element's), so you only set it when the rounding is somewhere else, such as a wrapper with `overflow: hidden`, or is not in px. A pill (radius of half the side or more) shows a step in the middle of the side. |
-| `--vl-primary`, `--vl-secondary`, `--vl-mean` | the ambient layer | The raw colours of the blobs. |
+| `--video-primary`, `--video-secondary` | the element `theme` applies to | Colours that white text is readable on, ready to use as a `background`. |
+| `--vl-reach`, `--vl-opacity` | the halo layer | Reach and opacity of the halo. The `reach` and `opacity` options set them on the layer itself, which wins over a value set higher up. Set them on a parent when you need a length that isn't in px, such as `calc()`, `%` or `vw`. |
+| `--vl-blur` | the halo layer | Radius of the blur of the `"natural"` halo. The `blur` option sets it on the layer. |
+| `--vl-radius` | the halo layer | The video's corner radius, as any CSS length. The halo's corners follow this rounded shape. It is read once from the video's `border-radius`, or else from its element's, so you only need to set it when the rounding is somewhere else (a wrapper with `overflow: hidden`, for example) or isn't in px. With a pill shape, where the radius is half the side or more, a step shows in the middle of the side. |
+| `--vl-primary`, `--vl-secondary`, `--vl-mean` | the ambient layer | The colours of the blobs of the `"vibrant"` ambient. |
 
 Each layer is a `div` with `data-vl="halo"` or `data-vl="ambient"`, `aria-hidden="true"`,
-`pointer-events: none`, `position: absolute; inset: 0; z-index: -1`, inserted first in its element.
+`pointer-events: none` and `position: absolute; inset: 0; z-index: -1`. It is inserted as the first
+child of its element.
 
-**What `halo` and `ambient` do to the element they apply to** (the video's parent by default), until
-they are stopped:
+While they run, `halo` and `ambient` change two things on the element they apply to, which is the
+video's parent by default:
 
-- it gets `position: relative` if it was `static`, and `isolation: isolate` (so that the layer stays behind its content without leaving the element). Both are restored on stop.
-- the halo extends **outside** the element: a parent with `overflow: hidden` clips it. Give the halo's element room, or move the `overflow` up.
+- It gets `position: relative` if it was `static`, and `isolation: isolate`, so the layer stays behind the element's content without going behind the element itself. Both are put back when the effect stops.
+- The halo extends outside the element, so a parent with `overflow: hidden` clips it. Give the halo's element some room, or move the `overflow` further up.
 
-## Before you use it: CORS
+## CORS
 
-The browser only lets a page read the pixels of a video that is **same-origin, or served with CORS
-headers and loaded with `crossorigin="anonymous"`**. Otherwise the video plays but the canvas is
-"tainted": reading is refused, and the effect reports it through `onError`.
+A page can only read the pixels of a video that is on the same origin, or that is **served with CORS
+headers and loaded with `crossorigin="anonymous"`**. Without that the video plays normally, but the
+browser refuses to hand over its pixels and the effect reports the failure through `onError`.
 
-1. **Same origin**: nothing to do.
-2. **Another origin (a CDN, S3, Bunny, Akamai…)**:
-   - set `crossorigin="anonymous"` on the `<video>` (`crossOrigin="anonymous"` in React) **before** its `src` is set. A video that already started loading without it keeps its restriction: set the attribute in the markup, not afterwards.
-   - make the server answer with `Access-Control-Allow-Origin` (your site's origin, or `*`).
-   - **on every response, including `206 Partial Content`** (Range requests, which is how browsers stream a video). A server that sends the header on full responses only fails once the browser seeks.
-   - for HLS, the playlist and **every segment** need it too.
-3. **Without CORS**, there is no workaround: videos of another origin cannot be read.
+1. If the video is on the same origin as the page, there is nothing to do.
+2. If it comes from another origin (a CDN, S3, Bunny, Akamai and so on):
+   - Set `crossorigin="anonymous"` on the `<video>` (`crossOrigin="anonymous"` in React) before its `src` is set. A video that started loading without it stays restricted, so put the attribute in the markup rather than adding it afterwards.
+   - Make the server answer with `Access-Control-Allow-Origin`, set to your site's origin or to `*`.
+   - Send that header on every response, including `206 Partial Content`. Browsers stream video with Range requests, so a server that only sends the header on full responses fails as soon as the browser seeks.
+   - For HLS, the playlist and every segment need the header too.
+3. Without CORS there is no workaround. A video from another origin can't be read.
 
-Also unsupported:
+A few other cases can't work either:
 
-- **DRM-protected video** (EME): the browser never exposes its frames.
-- **A video in an iframe**: pass the `<video>` of your own document.
-- The `poster` is read the same way: same origin, or CORS (see [Poster](#poster)).
+- DRM-protected video (EME). The browser never exposes its frames.
+- A video inside an iframe. Pass a `<video>` of your own document.
+- A `poster` from another origin without CORS. It is read the same way as the video (see [Poster](#poster)).
 
 ### Errors
 
-Pass `onError` to any effect, hook option or provider to be told when reading fails:
+Pass `onError` to any effect, hook option or provider to find out when reading fails:
 
 ```ts
 halo(video, undefined, {
@@ -296,46 +327,49 @@ halo(video, undefined, {
 });
 ```
 
-It is called **once**, and the read stops. The message depends on the browser (a `SecurityError` for
-a video that is not CORS-enabled). Without `onError` a refusal is silent: the video plays, there is
-simply no effect.
+`onError` is called once, then reading stops. The message depends on the browser. For a video
+without CORS it is a `SecurityError`. If you don't pass `onError`, a failure is silent. The video
+still plays, you just get no effect.
 
 ## Behaviour
 
 ### Off screen
 
-The read pauses while the video is off screen (with a 200 px margin: a halo spills out of its video),
-but only if everything using it just draws around it (`halo`). `ambient`, `theme`, `watch()` and the
-hooks can sit anywhere in the page, so they keep the colours coming while the video plays. `watch()`
-takes `aroundVideo: true` for a handle that, like a halo, only draws around the video.
+Reading pauses while the video is off screen, with a 200 px margin because a halo spills out of its
+video. This only happens when everything that uses the video just draws around it, which is the case
+of `halo`. `ambient`, `theme`, `watch()` and the hooks can be anywhere on the page, so they keep the
+colours coming for as long as the video plays. Pass `aroundVideo: true` to `watch()` for a handle
+that, like a halo, only draws around the video.
 
-A paused video presents no new frame, so nothing is read; when it is seeked or played again the new
+A paused video shows no new frame, so nothing is read. When it is played again or seeked, the new
 frame is read.
 
 ### Poster
 
-While the browser shows the `poster` (until the video is first played or sought, whatever `preload`
-says), the colours come from that image: an effect matches what is on screen and is not blank before
-the first frame. The poster must be readable like the video (same origin, or CORS). The frames take
-over at the first play or seek.
+While the browser shows the `poster`, the colours come from that image, so an effect matches what is
+on screen instead of staying blank until the first frame. The poster is shown until the video is
+first played or seeked, whatever `preload` says. It has to be readable like the video, which means
+same origin or CORS.
 
 ### Reduced motion
 
-Under `prefers-reduced-motion: reduce`:
+When the user asked for reduced motion (`prefers-reduced-motion: reduce`):
 
-- `ambient`'s blobs do not drift (read when the effect starts).
-- `halo` repaints at most once a second, which removes the flicker of a video that cuts quickly.
+- The blobs of `ambient` don't drift. This is checked once, when the effect starts.
+- `halo` is redrawn at most once a second, which removes the flicker of a video with quick cuts.
 
 ### Performance
 
-A frame is read in a Web Worker (through a `VideoFrame`), so the main thread only hands the frame
-over. The read picks WebGL or a 2D canvas by measuring both on your device (and measures again if
-the video's size changes or the device slows down). If the main thread would spend more than 10 % of its
-time on it (the fallback engine, on a slow device), frames are skipped, never queued.
+Frames are read in a Web Worker, through a `VideoFrame`, so the main thread only hands each frame
+over. The read times WebGL and a 2D canvas on the device and uses the faster one. It times them
+again if the video's size changes or the device slows down. If reading would take more than 10% of
+the main thread's time, which can happen with the fallback engine on a slow device, frames are
+skipped rather than queued.
 
-**Measured** on 2026-11-20, MacBook Pro (Apple M1 Pro, macOS 27.0.1), 25 fps clip, `halo` + `ambient` +
-`theme` running together (`bun run test:e2e`, `core` tests). *Latency* is the median time from a frame
-being requested to its colours being ready; *main thread* is the time the page's main thread spends per sample.
+The figures below were measured on 2026-11-20 on a MacBook Pro (Apple M1 Pro, macOS 27.0.1), with a
+25 fps clip and `halo`, `ambient` and `theme` running together. Latency is the median time between
+asking for a frame and having its colours. Main thread is the time the page's main thread spends on
+each frame read.
 
 | Browser | Method | Clip | Latency (p50) | Main thread / sample | Frames read |
 | --- | --- | --- | --- | --- | --- |
@@ -349,54 +383,38 @@ being requested to its colours being ready; *main thread* is the time the page's
 | WebKit (Playwright build) | WebGL | 1080p | 2.0 ms | 0.01 ms | 25 / 25 fps |
 | WebKit (Playwright build) | canvas | 1080p | 12.0 ms | 0.13 ms | 25 / 25 fps |
 
-Firefox creates the `VideoFrame` on the main thread, which is why its main-thread cost is higher; Firefox and
-Safari round timers to 1 ms, so their figures are coarse. These are one machine's figures, not a promise:
-run `bun run test:e2e` on yours.
+Firefox creates the `VideoFrame` on the main thread, which is why its main-thread cost is higher.
+Firefox and Safari round timers to 1 ms, so their figures are coarse. These numbers come from one
+machine. Run `bun run test:e2e` to get yours.
 
-**On a phone**, measured on 2026-11-21 on an iPhone 16e (iOS 27.2.1, Safari 27.2) with the compatibility page
-(`bun run dev:lan`, then `/compat.html`), on a Mux HLS stream played natively with `crossorigin`: the worker
-reads a frame with a median latency of 11 ms and no measurable main-thread cost (0 ms, p95 1 ms). Reading on
-the main thread instead costs 6 ms per sample (median). The first sample takes 80 to 300 ms, the time for the
-worker to start. Every case of the page behaved as documented in [CORS section](#before-you-use-it-cors)
-(same-origin, CORS with `crossorigin`, `MediaStream`, hls.js and native HLS were readable; without CORS they
-were blocked), except one that is not a failure: Safari plays a native HLS stream without `crossorigin`, but
-its frames cannot be read, where Chrome refuses to play it.
+On an iPhone 16e (Safari 27.2), the worker reads a frame with a median latency of 11 ms and no
+measurable cost on the main thread. The details are in [docs/performance.md](./docs/performance.md).
 
 ### Fallbacks
 
 | Situation | What happens |
 | --- | --- |
-| No Worker, `VideoFrame` or `OffscreenCanvas` | Reads on the main thread. |
-| A Content-Security-Policy blocks the worker (it is created from a `blob:` URL) | Reads on the main thread. To keep the worker, allow `worker-src blob:`. |
-| No `requestVideoFrameCallback` | `onError` is called, nothing is rendered, the video is untouched. |
-| No `IntersectionObserver` | The read never pauses off screen. |
-| Server-side rendering | Nothing runs; `useColors` returns a neutral dark colour. |
+| No Worker, `VideoFrame` or `OffscreenCanvas` | Frames are read on the main thread. |
+| A Content-Security-Policy blocks the worker, which is created from a `blob:` URL | Frames are read on the main thread. Allow `worker-src blob:` to keep the worker. |
+| No `requestVideoFrameCallback` | `onError` is called, nothing is drawn, and the video is left alone. |
+| No `IntersectionObserver` | Reading never pauses off screen. |
+| Server-side rendering | Nothing runs. `useColors` returns a neutral dark colour. |
 
 ## Browser support
 
-The browser must have `requestVideoFrameCallback`: Chrome and Edge 83, Safari 15.4, Firefox 132.
+The browser needs `requestVideoFrameCallback`, which means Chrome and Edge 83, Safari 15.4 or
+Firefox 132.
 
-The end-to-end tests run on current Chromium, Firefox and WebKit. The React bindings pass them with React 19
-(in the CI) and React 18.3 (checked by hand before the release).
+The end-to-end tests run on current Chromium, Firefox and WebKit. The React bindings pass them with
+React 19 in the CI, and were checked by hand with React 18.3 before the release.
 
 ## How it works
 
-Each sampled frame is squashed to 256×144, and a ring of `points` colours (default 12 on the long
-sides) is read along its edges, to a depth of `depth` (15 % of the smaller side). From that come the
-raw edge colours (`halo`), and three smoothed colours: the mean, and the two most vivid or dominant
-(`ambient`, `theme`, `watch`).
-
-## API summary
-
-`videolighting`:
-
-- Effects: `halo`, `ambient`, `theme` (with `HaloOptions`, `AmbientOptions`, `ThemeOptions`, `Effect`, `EffectOptions`).
-- Data: `watch` (with `Watcher`, `WatcherOptions`, `WatcherStats`, `Colors`, `Rgb`, `MethodChoice`).
-
-`videolighting/react`:
-
-- Components: `Halo`, `Ambient`, `Theme` (with `HaloProps`, `AmbientProps`, `ThemeProps`), `LightingProvider` (with `LightingProviderProps`).
-- Hooks: `useColors`, `useColorsEvent`.
+Each frame that is read is first shrunk to 256×144. A ring of colours is then read along its edges:
+12 on the long sides by default (`points`), to a depth of 15% of the smaller side (`depth`). The
+`halo` and the `"natural"` ambient use these edge colours directly. The rest (`theme`, the
+`"vibrant"` ambient, `watch`) uses five smoothed colours worked out from them: the average, the two
+that cover the most area, and the two most vivid.
 
 Versions follow [semver](https://semver.org). See the [changelog](./CHANGELOG.md).
 

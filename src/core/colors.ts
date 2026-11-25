@@ -1,10 +1,25 @@
 import type { EdgeColors, Rgb } from "./sample.js";
 
 /**
- * Pure colour helpers shared by the effects. Colours are the video's own: nothing
- * here adds saturation. `Rgb` channels are 0-255 and may be fractional while
- * being smoothed.
+ * Pure colour helpers shared by the effects. Colours are the video's own; only
+ * `saturate`, for the `"vibrant"` variants, pushes them. `Rgb` channels are
+ * 0-255 and may be fractional while being smoothed.
  */
+
+/** How much the `"vibrant"` variants push the saturation: 1 would leave the colours as they are. */
+const SATURATION = 1.2;
+
+/**
+ * `color` with its saturation multiplied by `SATURATION`, as the CSS
+ * `saturate()` filter does: each channel moves away from the colour's own
+ * grey by the same share. A grey stays grey.
+ */
+export function saturate([r, g, b]: Rgb): Rgb {
+  const grey = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  const push = (channel: number) =>
+    Math.min(255, Math.max(0, grey + (channel - grey) * SATURATION));
+  return [push(r), push(g), push(b)];
+}
 
 export function mean(points: Rgb[]): Rgb {
   let r = 0;
@@ -208,25 +223,28 @@ const whole = ([r, g, b]: Rgb): Rgb => [
 ];
 
 /**
- * The three colours a watcher aims at: `primary`, `secondary`, `average`. The two
- * most vivid colours of the picture when it has them (and `vibrant` allows),
- * else the dominant colours of its edges, kept in the same order as `previous`.
- * `secondary` falls back to `primary`, `primary` to `neutral`.
+ * The five colours a watcher aims at: the two dominant colours of the edges,
+ * by area, kept in the same order as `previous`; the mean of the edges; then
+ * the two most vivid colours of the picture, saturated (the dominant ones when
+ * the picture has nothing vivid). A missing colour falls back to `neutral`.
  */
 export function pickGoal(
   edges: EdgeColors,
   previous: Rgb[],
-  vibrant: boolean,
   neutral: Rgb
 ): Rgb[] {
   const points = [...edges.top, ...edges.right, ...edges.bottom, ...edges.left];
-  const [first, second] =
-    (vibrant ? edges.vivid : undefined) ??
-    keepOrder(previous, palette(points, 2));
+  const [first = neutral, second = first] = keepOrder(
+    previous,
+    palette(points, 2)
+  );
+  const [vivid, other] = edges.vivid ?? [first, second];
   return [
-    whole(first ?? neutral),
-    whole(second ?? first ?? neutral),
+    whole(first),
+    whole(second),
     whole(mean(points)),
+    whole(saturate(vivid)),
+    whole(saturate(other)),
   ];
 }
 

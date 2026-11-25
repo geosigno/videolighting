@@ -129,10 +129,9 @@ export function Page({ start }: { start: PageStart }) {
     () => ({
       method: state.method,
       onError: recordError,
-      vibrant: state.vibrant,
       worker: !state.mainThread,
     }),
-    [state.method, state.mainThread, state.vibrant]
+    [state.method, state.mainThread]
   );
 
   // Once the Checks section re-renders the page: a new object and a new
@@ -162,12 +161,14 @@ export function Page({ start }: { start: PageStart }) {
         )}
       </header>
       <Stage
+        ambient={state.ambient}
         effects={state.effects}
+        halo={state.halo}
         lateVideoMs={checkParams.lateVideoMs}
         onVideo={setVideo}
         preset={preset}
         src={state.src}
-        variant={state.variant}
+        theme={state.theme}
         video={video}
       />
       {state.panel && (

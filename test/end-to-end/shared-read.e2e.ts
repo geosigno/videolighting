@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { saturate } from "../../src/core/colors.js";
 import {
   ALL,
   CONTAINER,
@@ -56,35 +57,40 @@ test.describe("all effects together", () => {
     expect(
       far(await channels(page, '[data-vl="ambient"]', "--vl-mean"), NEUTRAL)
     ).toBeGreaterThan(40);
-    const intermediates = await page.evaluate(async (selector) => {
-      const video = document.querySelector<HTMLVideoElement>(selector);
-      const layer = document.querySelector<HTMLElement>('[data-vl="ambient"]');
-      if (!(video && layer)) {
-        return -1;
-      }
-      const mean = () =>
-        (layer.style.getPropertyValue("--vl-mean").match(/\d+/gu) ?? []).map(
-          Number
+    const intermediates = await page.evaluate(
+      async ([selector, target]) => {
+        const video = document.querySelector<HTMLVideoElement>(selector);
+        const layer = document.querySelector<HTMLElement>(
+          '[data-vl="ambient"]'
         );
-      const before = mean();
-      // The quad clip's edges average to about (128, 152, 43): far from shift's red.
-      video.src = "/quad-360.webm";
-      video.play().catch(() => undefined);
-      const target = [128, 152, 43];
-      const dist = (a: number[], b: number[]) =>
-        Math.hypot(...a.map((v, i) => v - (b[i] ?? 0)));
-      let between = 0;
-      const end = performance.now() + 2500;
-      while (performance.now() < end) {
-        // biome-ignore lint/performance/noAwaitInLoops: one display frame at a time
-        await new Promise((resolve) => requestAnimationFrame(resolve));
-        const now = mean();
-        if (dist(now, before) > 45 && dist(now, target) > 45) {
-          between += 1;
+        if (!(video && layer)) {
+          return -1;
         }
-      }
-      return between;
-    }, VIDEO);
+        const mean = () =>
+          (layer.style.getPropertyValue("--vl-mean").match(/\d+/gu) ?? []).map(
+            Number
+          );
+        const before = mean();
+        // The quad clip's edges average to about (128, 152, 43), saturated by
+        // the vibrant variant: far from shift's red.
+        video.src = "/quad-360.webm";
+        video.play().catch(() => undefined);
+        const dist = (a: number[], b: number[]) =>
+          Math.hypot(...a.map((v, i) => v - (b[i] ?? 0)));
+        let between = 0;
+        const end = performance.now() + 2500;
+        while (performance.now() < end) {
+          // biome-ignore lint/performance/noAwaitInLoops: one display frame at a time
+          await new Promise((resolve) => requestAnimationFrame(resolve));
+          const now = mean();
+          if (dist(now, before) > 45 && dist(now, target) > 45) {
+            between += 1;
+          }
+        }
+        return between;
+      },
+      [VIDEO, saturate([128, 152, 43])] as const
+    );
     expect(intermediates).toBe(0);
   });
 

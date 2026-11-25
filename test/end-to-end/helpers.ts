@@ -24,6 +24,7 @@ export const VIDEO = '[data-testid="video"]';
 
 /** The page's URL input. Unset keys keep the page's defaults. */
 export interface PageQuery {
+  ambient?: "natural" | "vibrant";
   aspect?: "16:9" | "21:9" | "4:3" | "9:16";
   effects?: EffectName[];
   main?: boolean;
@@ -31,7 +32,6 @@ export interface PageQuery {
   panel?: boolean;
   src?: string;
   strict?: boolean;
-  variant?: "blobs" | "mosaic";
 }
 
 export function pageQuery(query: PageQuery): string {
@@ -57,8 +57,8 @@ export function pageQuery(query: PageQuery): string {
   if (query.strict !== undefined) {
     params.set("strict", query.strict ? "1" : "0");
   }
-  if (query.variant !== undefined) {
-    params.set("variant", query.variant);
+  if (query.ambient !== undefined) {
+    params.set("ambient", query.ambient);
   }
   const text = params.toString();
   return text ? `?${text}` : "";
