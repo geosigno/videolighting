@@ -36,7 +36,7 @@ test.describe("robustness", () => {
     expect(found?.messages.join()).toContain("requestVideoFrameCallback");
   });
 
-  test("a Content-Security-Policy that blocks workers still gives colours", async ({
+  test("a Content-Security-Policy that blocks workers still gives colors", async ({
     page,
   }) => {
     await page.route("**/page.html*", async (route) => {
@@ -59,7 +59,7 @@ test.describe("robustness", () => {
     page,
   }) => {
     await open(page, { effects: [] });
-    /** Style writes on a halo around a video whose colour changes 20 times a second, for 3 s. */
+    /** Style writes on a halo around a video whose color changes 20 times a second, for 3 s. */
     const paints = () =>
       page.evaluate(async () => {
         const { glowApi } = window;

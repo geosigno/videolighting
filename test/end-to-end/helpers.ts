@@ -265,14 +265,14 @@ export interface Sample {
 
 export type Side = "bottom" | "left" | "right" | "top";
 
-/** Mean colour of the middle of a side (the ends overlap the neighbouring strip). */
+/** Mean color of the middle of a side (the ends overlap the neighboring strip). */
 export function side({ colors }: Sample, name: Side): number[] {
   const points = colors[name];
-  // The zones whose centre lies in the middle half of the side: the sides have
+  // The zones whose center lies in the middle half of the side: the sides have
   // different numbers of zones (the shorter ones fewer), so not a fixed slice.
   const middle = points.filter((_, i) => {
-    const centre = (i + 0.5) / points.length;
-    return centre >= 0.25 && centre <= 0.75;
+    const center = (i + 0.5) / points.length;
+    return center >= 0.25 && center <= 0.75;
   });
   return [0, 1, 2].map(
     (channel) =>
@@ -280,12 +280,12 @@ export function side({ colors }: Sample, name: Side): number[] {
   );
 }
 
-/** Colours of the clips (see make-fixtures.sh), first half then second half. */
+/** Colors of the clips (see make-fixtures.sh), first half then second half. */
 export const RED = [255, 0, 0];
 export const BLUE = [0, 0, 255];
 export const GREEN = [0, 200, 0];
 export const YELLOW = [255, 255, 0];
-/** Per channel, out of 255: video compression and each browser's own colour conversion. */
+/** Per channel, out of 255: video compression and each browser's own color conversion. */
 const TOLERANCE = 40;
 
 export function expectColor(actual: number[], expected: number[]) {
@@ -432,12 +432,12 @@ export async function runCore(
   );
 }
 
-/** The neutral colour every read starts from. */
+/** The neutral color every read starts from. */
 export const NEUTRAL = [24, 24, 30];
 export const far = (a: number[], b: number[]) =>
   Math.hypot(...b.map((v, i) => (a[i] ?? 0) - v));
 
-/** Red, green, blue of every colour stop of an element's background gradient. */
+/** Red, green, blue of every color stop of an element's background gradient. */
 export async function stops(page: Page, selector: string, nth: number) {
   return await page.evaluate(
     ({ nth: which, selector: query }) => {

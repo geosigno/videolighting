@@ -17,10 +17,10 @@ function radiusOf(...elements: HTMLElement[]): number {
   return 0;
 }
 
-/** How far the natural halo's colour goes before the blur, when nothing sets it. */
+/** How far the natural halo's color goes before the blur, when nothing sets it. */
 const BLUR_REACH = "20px";
 
-/** The same edges with every colour's saturation pushed. */
+/** The same edges with every color's saturation pushed. */
 const pushed = (edges: EdgeColors): EdgeColors => ({
   ...edges,
   bottom: edges.bottom.map(saturate),
@@ -36,21 +36,21 @@ export interface HaloOptions {
   opacity?: number;
   /**
    * How far the bands reach from the video, in px. Default 140. With
-   * `"natural"`: how far the colour goes before the blur spreads it, default 20.
+   * `"natural"`: how far the color goes before the blur spreads it, default 20.
    */
   reach?: number;
   /**
-   * `"vibrant"` (default): bands that fade with the distance, each colour
+   * `"vibrant"` (default): bands that fade with the distance, each color
    * straight out from its edge, saturation pushed. `"natural"`: the edges' own
-   * colours as one soft cloud, drawn with a CSS blur.
+   * colors as one soft cloud, drawn with a CSS blur.
    */
   variant?: "natural" | "vibrant";
 }
 
 /**
- * The glow around the video, in the colours of its edges: bands fading into
+ * The glow around the video, in the colors of its edges: bands fading into
  * nothing (`"vibrant"`) or one blurred cloud (`"natural"`).
- * It draws every sampled frame as it comes (raw edge colours, no smoothing).
+ * It draws every sampled frame as it comes (raw edge colors, no smoothing).
  * `reach`, `opacity` and `blur` set the CSS variables `--vl-reach`,
  * `--vl-opacity` and `--vl-blur` on its layer, which win over the same
  * variables set higher up; use those for a length that is not in px. The corners follow the video's

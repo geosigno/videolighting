@@ -33,7 +33,7 @@ export function readCheckParams(search: string): { lateVideoMs: number } {
 
 const rgb = ([r, g, b]: readonly number[]) => `rgb(${r} ${g} ${b})`;
 
-/** Renders on every colour update (`useColors`). */
+/** Renders on every color update (`useColors`). */
 function ColorsDemo() {
   const colors = useColors();
   return (

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Regenerates the test clips (needs ffmpeg; CI does not: the clips are committed).
 #
-# Each clip is 4 s at 25 fps with a grey centre and a 20 % strip on every side.
+# Each clip is 4 s at 25 fps with a gray center and a 20 % strip on every side.
 # First 2 s: left red, right blue, top green, bottom yellow.
 # Last 2 s:  left blue, right red, top yellow, bottom green (so a change is visible).
 #
 # Encoded in BT.709 AND tagged as such, like a real HD video: an untagged clip is
-# decoded with a different matrix per browser and the colours drift (up to 49/255
+# decoded with a different matrix per browser and the colors drift (up to 49/255
 # on Safari), which would make these tests measure the clip, not the library.
 set -euo pipefail
 cd "$(dirname "$0")/public"
@@ -27,8 +27,8 @@ for size in "640 360" "1920 1080" "3840 2160"; do
 done
 ls -la
 
-# shift-360.webm: the whole frame is one colour, red for 2 s then blue for 2 s.
-# Unlike quad-*, the picture's overall colours change (quad only swaps its strips).
+# shift-360.webm: the whole frame is one color, red for 2 s then blue for 2 s.
+# Unlike quad-*, the picture's overall colors change (quad only swaps its strips).
 ffmpeg -v error -y \
   -f lavfi -i "color=c=0xc83c3c:s=640x360:r=25:d=2" \
   -f lavfi -i "color=c=0x3c3cc8:s=640x360:r=25:d=2" \

@@ -3,10 +3,10 @@ import type { LabContext } from "./core.js";
 
 /**
  * Design tokens from the video: --video-primary and --video-secondary, set on
- * any container. They start from the very colours the background shows (shared
+ * any container. They start from the very colors the background shows (shared
  * core). The one thing done here: the text on them is always white, so the
- * colour is darkened, only as much as needed, until white on it reaches the
- * contrast asked for. The panel shows the colour of the video and the one used.
+ * color is darkened, only as much as needed, until white on it reaches the
+ * contrast asked for. The panel shows the color of the video and the one used.
  */
 
 const MARKUP = `
@@ -29,7 +29,7 @@ const MARKUP = `
         <option value="4.5">at least 4.5:1 (AA)</option>
         <option value="7">at least 7:1 (AAA)</option>
         <option value="3">at least 3:1 (large text)</option>
-        <option value="1">no limit (colour of the video)</option>
+        <option value="1">no limit (color of the video)</option>
       </select>
     </label>
     <label class="check"><input type="checkbox"> Tint the browser bar (phones)</label>

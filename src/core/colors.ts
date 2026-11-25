@@ -1,23 +1,23 @@
 import type { EdgeColors, Rgb } from "./sample.js";
 
 /**
- * Pure colour helpers shared by the effects. Colours are the video's own; only
+ * Pure color helpers shared by the effects. Colors are the video's own; only
  * `saturate`, for the `"vibrant"` variants, pushes them. `Rgb` channels are
  * 0-255 and may be fractional while being smoothed.
  */
 
-/** How much the `"vibrant"` variants push the saturation: 1 would leave the colours as they are. */
+/** How much the `"vibrant"` variants push the saturation: 1 would leave the colors as they are. */
 const SATURATION = 1.2;
 
 /**
  * `color` with its saturation multiplied by `SATURATION`, as the CSS
- * `saturate()` filter does: each channel moves away from the colour's own
- * grey by the same share. A grey stays grey.
+ * `saturate()` filter does: each channel moves away from the color's own
+ * gray by the same share. A gray stays gray.
  */
 export function saturate([r, g, b]: Rgb): Rgb {
-  const grey = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  const gray = 0.2126 * r + 0.7152 * g + 0.0722 * b;
   const push = (channel: number) =>
-    Math.min(255, Math.max(0, grey + (channel - grey) * SATURATION));
+    Math.min(255, Math.max(0, gray + (channel - gray) * SATURATION));
   return [push(r), push(g), push(b)];
 }
 
@@ -107,8 +107,8 @@ const memo = new Map<string, WhiteText>();
 const MEMO_LIMIT = 512;
 
 /**
- * A background colour for white text: darkened (same hue and saturation) until
- * white on it reaches `min`:1 contrast; never lightened, so a colour that already
+ * A background color for white text: darkened (same hue and saturation) until
+ * white on it reaches `min`:1 contrast; never lightened, so a color that already
  * reads is returned as it is. The lightness is found by bisection (about 7
  * steps), and the answer for a given input is remembered.
  */
@@ -148,34 +148,34 @@ const distance = (a: Rgb, b: Rgb) =>
 
 /** Seeds: the point farthest from the overall mean, then the farthest from the seeds so far. */
 function seeds(points: Rgb[], count: number): Rgb[] {
-  const centre = mean(points);
+  const center = mean(points);
   const farthest = (score: (p: Rgb) => number) =>
     points.reduce((a, b) => (score(b) > score(a) ? b : a));
-  const found: Rgb[] = [farthest((p) => distance(p, centre))];
+  const found: Rgb[] = [farthest((p) => distance(p, center))];
   while (found.length < count) {
     found.push(farthest((p) => Math.min(...found.map((c) => distance(p, c)))));
   }
   return found;
 }
 
-function nearest(point: Rgb, centres: Rgb[]): number {
+function nearest(point: Rgb, centers: Rgb[]): number {
   let best = 0;
-  for (const [i, c] of centres.entries()) {
-    if (distance(point, c) < distance(point, centres[best] ?? c)) {
+  for (const [i, c] of centers.entries()) {
+    if (distance(point, c) < distance(point, centers[best] ?? c)) {
       best = i;
     }
   }
   return best;
 }
 
-/** One k-means round: each point joins its nearest centre, each centre becomes the mean of its points. */
-function refine(points: Rgb[], centres: Rgb[]) {
-  const groups = centres.map(() => [] as Rgb[]);
+/** One k-means round: each point joins its nearest center, each center becomes the mean of its points. */
+function refine(points: Rgb[], centers: Rgb[]) {
+  const groups = centers.map(() => [] as Rgb[]);
   for (const point of points) {
-    groups[nearest(point, centres)]?.push(point);
+    groups[nearest(point, centers)]?.push(point);
   }
   return {
-    centres: centres.map((c, i) => {
+    centers: centers.map((c, i) => {
       const group = groups[i] ?? [];
       return group.length > 0 ? mean(group) : c;
     }),
@@ -184,24 +184,24 @@ function refine(points: Rgb[], centres: Rgb[]) {
 }
 
 /**
- * `count` dominant colours of a set of colours, by area, biggest first. Each is
- * the mean of the colours that belong to it, so it really is in the picture.
+ * `count` dominant colors of a set of colors, by area, biggest first. Each is
+ * the mean of the colors that belong to it, so it really is in the picture.
  */
 export function palette(points: Rgb[], count = 2): Rgb[] {
   if (points.length === 0) {
     return Array.from({ length: count }, () => [20, 20, 28] as Rgb);
   }
-  let state = { centres: seeds(points, count), sizes: [] as number[] };
+  let state = { centers: seeds(points, count), sizes: [] as number[] };
   for (let round = 0; round < 6; round += 1) {
-    state = refine(points, state.centres);
+    state = refine(points, state.centers);
   }
-  return state.centres
+  return state.centers
     .map((c, i) => ({ c, n: state.sizes[i] ?? 0 }))
     .sort((a, b) => b.n - a.n)
     .map(({ c }) => c);
 }
 
-/** The two dominant colours keep their roles from one frame to the next. */
+/** The two dominant colors keep their roles from one frame to the next. */
 function keepOrder(previous: Rgb[], next: Rgb[]): Rgb[] {
   const [p0, p1] = previous;
   const [n0, n1] = next;
@@ -223,10 +223,10 @@ const whole = ([r, g, b]: Rgb): Rgb => [
 ];
 
 /**
- * The five colours a watcher aims at: the two dominant colours of the edges,
+ * The five colors a watcher aims at: the two dominant colors of the edges,
  * by area, kept in the same order as `previous`; the mean of the edges; then
- * the two most vivid colours of the picture, saturated (the dominant ones when
- * the picture has nothing vivid). A missing colour falls back to `neutral`.
+ * the two most vivid colors of the picture, saturated (the dominant ones when
+ * the picture has nothing vivid). A missing color falls back to `neutral`.
  */
 export function pickGoal(
   edges: EdgeColors,
@@ -249,7 +249,7 @@ export function pickGoal(
 }
 
 export interface Smoother {
-  /** The smoothed colours; a new array only when one of them changed. */
+  /** The smoothed colors; a new array only when one of them changed. */
   colors: Rgb[];
   /** Jump straight to `goal`. */
   snap: (goal: Rgb[]) => void;
@@ -262,7 +262,7 @@ const round = (rgb: Rgb) =>
 
 /**
  * Exponential smoothing with time constant `tauSeconds`. An exponential never
- * reaches its goal, so once every colour rounds to the goal's, the goal itself
+ * reaches its goal, so once every color rounds to the goal's, the goal itself
  * is taken and `step` reports `false` from then on: callers can stop their loop.
  */
 export function createSmoother(tauSeconds: number, initial: Rgb[]): Smoother {

@@ -6,7 +6,7 @@ import { ambient, halo, theme, watch } from "../src/index.js";
  * elements. The theme's variables are inherited, so writing them on an element
  * makes the browser recalculate the style of everything under it.
  *
- * `?transport=` compares ways to bring the two colours to the `consumers`
+ * `?transport=` compares ways to bring the two colors to the `consumers`
  * elements that use them (class `themed`), written `fps` times a second (0:
  * every display frame) by this page, not by the library's `theme`:
  *   page       inline, on the element that holds the whole page (inherited)
@@ -77,7 +77,7 @@ if (effects.includes("theme")) {
   theme(video, byId(scope === "box" ? "box" : "page"));
 }
 
-/** The styles the colours are written to, for the transport asked for. */
+/** The styles the colors are written to, for the transport asked for. */
 function targets(): CSSStyleDeclaration[] {
   if (transport === "page") {
     return [page.style];

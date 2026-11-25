@@ -21,7 +21,7 @@ import {
 } from "./helpers.js";
 
 /**
- * What the core must do, in every browser. Only the essentials: the colours
+ * What the core must do, in every browser. Only the essentials: the colors
  * are right, they follow the picture, every frame is read, it is fast enough,
  * stopping stops it, and a video it cannot read is reported. Run on the
  * reference page with no effect on, through `glowApi.watchVideo`.
@@ -35,7 +35,7 @@ const clip = (height: Height) => `/quad-${height}.webm`;
 const WARM_UP = 15;
 
 test.describe("core", () => {
-  test("reports the colour of each edge", async ({ page }) => {
+  test("reports the color of each edge", async ({ page }) => {
     const { samples, error } = await runCore(page, {
       ms: 1800,
       src: clip(360),
@@ -44,7 +44,7 @@ test.describe("core", () => {
     expectFirstPicture(samples);
   });
 
-  test("reports the same colours from the main thread", async ({ page }) => {
+  test("reports the same colors from the main thread", async ({ page }) => {
     const { samples, error } = await runCore(page, {
       ms: 1800,
       src: clip(360),
@@ -123,14 +123,14 @@ test.describe("core", () => {
  * The same essentials with the read method forced through the page's URL
  * (`?method=`), all three effects on the 1080p clip: the read uses that method
  * (a forced WebGL the browser's Worker cannot do falls back to the canvas, and
- * says so), and the colours, the frame rate and the cost hold.
+ * says so), and the colors, the frame rate and the cost hold.
  */
 for (const forced of ["webgl", "canvas"] as const) {
   test.describe(`method ${forced}`, () => {
     const HEIGHT = 1080;
     const query = { method: forced, src: clip(HEIGHT) };
 
-    test("reports the colour of each edge", async ({ page }) => {
+    test("reports the color of each edge", async ({ page }) => {
       await open(page, query);
       const expected = await expectMethod(page, test.info(), forced);
       // At most one loop of the clip (4 s), until a sample inside the first picture.

@@ -69,9 +69,9 @@ async function writesBetween(page: Page, from: number, to: number) {
 }
 
 test.describe("ambient", () => {
-  test("sets its colours", async ({ page }) => {
+  test("sets its colors", async ({ page }) => {
     await open(page, { effects: ["ambient"] });
-    // Off the neutral start colour: the read has painted.
+    // Off the neutral start color: the read has painted.
     await expect
       .poll(async () =>
         far(
@@ -93,10 +93,10 @@ test.describe("ambient", () => {
     expect(Math.abs(mb - b)).toBeLessThan(40);
   });
 
-  // Each write repaints the three blobs: a soft colour does not need the
+  // Each write repaints the three blobs: a soft color does not need the
   // display's frame rate.
-  test("blobs change colour at most 30 times a second", async ({ page }) => {
-    // Red for 2 s, then blue: the colours move after each change.
+  test("blobs change color at most 30 times a second", async ({ page }) => {
+    // Red for 2 s, then blue: the colors move after each change.
     await open(page, { effects: ["ambient"], src: "/shift-360.webm" });
     const gaps = await page.evaluate(async () => {
       const times: number[] = [];
@@ -164,7 +164,7 @@ test.describe("ambient", () => {
       { effects: ["ambient"], src: "/shift-360.webm" },
       { ready: false }
     );
-    // Video time 0.6 s to 1.6 s: the clip is one steady red, so once the colours
+    // Video time 0.6 s to 1.6 s: the clip is one steady red, so once the colors
     // have settled nothing is written.
     expect(await writesBetween(page, 0.6, 1.6)).toBe(0);
     // The clip goes from red to blue at 2 s: the control that the count can be above 0.
@@ -248,7 +248,7 @@ test.describe("ambient", () => {
         check();
       });
     }, VIDEO);
-    // Paused: no sample comes any more, and the colours still have to arrive.
+    // Paused: no sample comes any more, and the colors still have to arrive.
     await expect
       .poll(async () => (await mosaicLean(page)).red, {
         message: "the fade ends on the second half",

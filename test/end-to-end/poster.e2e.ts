@@ -3,7 +3,7 @@ import { BLUE, expectColor, GREEN, open, RED } from "./helpers.js";
 
 /**
  * Before a video has any frame (nothing loaded yet, or `preload="none"`), the
- * colours come from its `poster` image, so an effect is not blank in the
+ * colors come from its `poster` image, so an effect is not blank in the
  * meantime. Run on the reference page with no effect on.
  */
 test.describe("poster", () => {
@@ -24,7 +24,7 @@ test.describe("poster", () => {
       return canvas.toDataURL();
     });
 
-  test("a video that has not started takes its colours from its poster", async ({
+  test("a video that has not started takes its colors from its poster", async ({
     page,
   }) => {
     await open(page, { effects: [] });
@@ -53,7 +53,7 @@ test.describe("poster", () => {
     expectColor(edges.top.at(-1) ?? [], BLUE);
   });
 
-  test("the vibrant primary is the most vivid colour of the picture, the natural one the dominant colour of its edges", async ({
+  test("the vibrant primary is the most vivid color of the picture, the natural one the dominant color of its edges", async ({
     page,
   }) => {
     await open(page, { effects: [] });
@@ -79,7 +79,7 @@ test.describe("poster", () => {
       video.poster = canvas.toDataURL();
       document.body.append(video);
       const watcher = glowApi.watch(video);
-      // Colours are only worked out for someone who listens.
+      // Colors are only worked out for someone who listens.
       let latest = watcher.state();
       watcher.subscribe((next) => {
         latest = next;
@@ -87,7 +87,7 @@ test.describe("poster", () => {
       await new Promise((resolve) => {
         watcher.onSample(resolve);
       });
-      // The listeners run before the colours are set: let this delivery finish.
+      // The listeners run before the colors are set: let this delivery finish.
       await new Promise((resolve) => setTimeout(resolve));
       watcher.destroy();
       video.remove();
@@ -101,7 +101,7 @@ test.describe("poster", () => {
     expect(plainGreen).toBeGreaterThan(150);
   });
 
-  test("a loaded video that was not played keeps its poster colours", async ({
+  test("a loaded video that was not played keeps its poster colors", async ({
     page,
   }) => {
     await open(page, { effects: [] });

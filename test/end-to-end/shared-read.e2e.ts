@@ -38,7 +38,7 @@ test.describe("all effects together", () => {
     expect(found.skipped).toBe(0);
   });
 
-  test("jump to the colours of a new video instead of fading from the old one", async ({
+  test("jump to the colors of a new video instead of fading from the old one", async ({
     page,
   }) => {
     await open(page, { effects: ["ambient"], src: "/shift-360.webm" });

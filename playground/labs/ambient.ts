@@ -3,8 +3,8 @@ import type { Colors, LabContext } from "./core.js";
 
 /**
  * Apple Music style background: three soft blobs drifting slowly, in the
- * video's own colours (dominant, second dominant, mean) over a neutral dark
- * base. The colours come from the shared core: nothing is changed here.
+ * video's own colors (dominant, second dominant, mean) over a neutral dark
+ * base. The colors come from the shared core: nothing is changed here.
  */
 
 export interface AmbientSurface {

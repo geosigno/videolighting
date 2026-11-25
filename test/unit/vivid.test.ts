@@ -22,7 +22,7 @@ function frame(base: Rgb, spot?: Rgb, size = 0) {
 }
 
 describe("vivid", () => {
-  it("picks a small pink spot over a big beige background; a single hue has no other colour", () => {
+  it("picks a small pink spot over a big beige background; a single hue has no other color", () => {
     const pink: Rgb = [240, 60, 150];
     const [primary, secondary] =
       vivid(frame([200, 185, 165], pink, 12), W, H) ?? [];
@@ -32,13 +32,13 @@ describe("vivid", () => {
     expect(secondary).toEqual(primary);
   });
 
-  it("ignores a spot too small to be a colour", () => {
+  it("ignores a spot too small to be a color", () => {
     expect(
       vivid(frame([128, 128, 128], [240, 60, 150], 2), W, H)
     ).toBeUndefined();
   });
 
-  it("finds nothing in a grey or a uniform beige frame", () => {
+  it("finds nothing in a gray or a uniform beige frame", () => {
     expect(vivid(frame([128, 128, 128]), W, H)).toBeUndefined();
     expect(vivid(frame([200, 185, 165]), W, H)).toBeUndefined();
   });

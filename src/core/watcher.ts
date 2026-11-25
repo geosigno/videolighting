@@ -5,13 +5,13 @@ import type { MethodChoice, ReadMethod } from "./reader.js";
 import type { EdgeColors, EdgeLayout, Rgb } from "./sample.js";
 
 /**
- * One read of a video, shared by everything that wants its colours.
+ * One read of a video, shared by everything that wants its colors.
  *
  * `watch(video)` gives a handle; the first handle for a video starts the read,
  * the last `destroy()` stops it (after a short grace period, so a quick
  * unmount-then-remount, React StrictMode say, does not restart it). Two streams:
- *  - `onSample`: the raw edge colours, on every sampled frame;
- *  - `subscribe`: the smoothed colours, on every display frame, only while
+ *  - `onSample`: the raw edge colors, on every sampled frame;
+ *  - `subscribe`: the smoothed colors, on every display frame, only while
  *    they are moving. The palette and the smoothing are not computed at all
  *    while nobody subscribes.
  * When the video leaves the viewport the read pauses, and so do both streams
@@ -20,20 +20,20 @@ import type { EdgeColors, EdgeLayout, Rgb } from "./sample.js";
  * `watch()` can be anywhere in the page: they keep the read going.
  */
 
-/** Two colours of the video: the main one and a second one. */
+/** Two colors of the video: the main one and a second one. */
 export interface ColorPair {
   primary: Rgb;
   secondary: Rgb;
 }
 
-/** The video's colours, smoothed. */
+/** The video's colors, smoothed. */
 export interface Colors {
-  /** Mean of the colours along the video's edges. */
+  /** Mean of the colors along the video's edges. */
   mean: Rgb;
-  /** The two dominant colours along the edges, by area, as they are. */
+  /** The two dominant colors along the edges, by area, as they are. */
   natural: ColorPair;
   /**
-   * The two most vivid colours of the whole picture (a pink shirt on a beige
+   * The two most vivid colors of the whole picture (a pink shirt on a beige
    * scene), with their saturation pushed. The dominant ones, pushed, when the
    * picture has nothing vivid.
    */
@@ -41,7 +41,7 @@ export interface Colors {
 }
 
 const NEUTRAL_RGB: Rgb = [24, 24, 30];
-/** The five colours of a read before its first frame, in `pickGoal`'s order. */
+/** The five colors of a read before its first frame, in `pickGoal`'s order. */
 const STILL: Rgb[] = Array.from({ length: 5 }, () => NEUTRAL_RGB);
 /** What `state()` gives before the first frame; also a server-side snapshot. */
 export const NEUTRAL: Colors = Object.freeze({
@@ -86,15 +86,15 @@ export interface WatcherStats {
 export interface Watcher {
   /** Release this handle. The read stops when the last handle is released. Idempotent. */
   destroy: () => void;
-  /** Raw edge colours of every sampled frame. Returns the unsubscribe function. */
+  /** Raw edge colors of every sampled frame. Returns the unsubscribe function. */
   onSample: (
     listener: (edges: EdgeColors, cost: SampleCost) => void
   ) => () => void;
-  /** The smoothed colours now; the same object until they change. */
+  /** The smoothed colors now; the same object until they change. */
   state: () => Colors;
   stats: () => WatcherStats;
   /**
-   * Smoothed colours on every display frame while they move, and once right
+   * Smoothed colors on every display frame while they move, and once right
    * away with the current ones. Returns the unsubscribe function.
    */
   subscribe: (listener: (colors: Colors) => void) => () => void;
@@ -217,7 +217,7 @@ function startRead(video: HTMLVideoElement, options: WatcherOptions): Shared {
     watcherMs: 0,
   };
 
-  /** Publish the smoothed colours and tell the frame listeners. */
+  /** Publish the smoothed colors and tell the frame listeners. */
   const emit = () => {
     state.colors = asColors(state.smoother.colors);
     for (const listener of state.frameListeners) {
@@ -263,7 +263,7 @@ function startRead(video: HTMLVideoElement, options: WatcherOptions): Shared {
   };
   state.retarget = retarget;
 
-  /** Give listeners a new set of edge colours: a frame, or the poster before the first frame. */
+  /** Give listeners a new set of edge colors: a frame, or the poster before the first frame. */
   const deliver = (edges: EdgeColors, cost: SampleCost, fromFrame: boolean) => {
     const started = performance.now();
     if (fromFrame) {
@@ -290,7 +290,7 @@ function startRead(video: HTMLVideoElement, options: WatcherOptions): Shared {
       depth: options.depth,
       method: options.method,
       onColors: (edges, cost) => {
-        // The video still shows its poster: its colours are the poster's.
+        // The video still shows its poster: its colors are the poster's.
         if (!posterShown(video)) {
           deliver(edges, cost, true);
         }
@@ -385,9 +385,9 @@ export function inspect(video: HTMLVideoElement): Inspector | undefined {
 }
 
 /**
- * The smoothed colours of the running read of `video`, or `NEUTRAL` when there
+ * The smoothed colors of the running read of `video`, or `NEUTRAL` when there
  * is none. Like `inspect`, it holds no reference. It returns the same object
- * until the colours change, so it can serve as a `getSnapshot`.
+ * until the colors change, so it can serve as a `getSnapshot`.
  */
 export function peekColors(video: HTMLVideoElement): Colors {
   return shared.get(video)?.colors ?? NEUTRAL;

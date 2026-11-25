@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { open, stopAndKeepHost, stops } from "./helpers.js";
 
-/** The halo on the reference page: colour bands around the video. */
+/** The halo on the reference page: color bands around the video. */
 test.describe("halo", () => {
-  test("shows the edge colour unchanged", async ({ page }) => {
+  test("shows the edge color unchanged", async ({ page }) => {
     await open(page, { effects: ["halo"] });
     // Bands are top, right, bottom, left: the left one runs down the red strip.
     await expect

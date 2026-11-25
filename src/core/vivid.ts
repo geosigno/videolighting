@@ -3,17 +3,17 @@ import type { Rgb } from "./sample.js";
 
 /**
  * A pixel counts only if its vividness (chroma × √brightness, 0-255) reaches this:
- * greys and beiges do not. The brightness term is soft: a dark neon still counts,
+ * grays and beiges do not. The brightness term is soft: a dark neon still counts,
  * a dark brown counts less than a pink.
  */
 const VIVID_FLOOR = 40;
-/** A hue must cover this share of the picture to count: a logo or a reflet is not a colour. */
+/** A hue must cover this share of the picture to count: a logo or a reflet is not a color. */
 const MIN_SHARE = 0.01;
 /** Hue slices of 30°. */
 const BINS = 12;
 /** `secondary` must sit at least this far from `primary` on the hue wheel. */
 const MIN_HUE_GAP = 40;
-/** Failing that, the closest hue that still reads as another colour. */
+/** Failing that, the closest hue that still reads as another color. */
 const CLOSE_HUE_GAP = 15;
 /** One pixel in this many on each axis: the frame is already averaged by its downscale. */
 const STEP = 4;
@@ -30,7 +30,7 @@ const hueGap = (a: number, b: number) => {
 };
 
 /**
- * The two most vivid colours of a whole RGBA frame, or `undefined` when nothing
+ * The two most vivid colors of a whole RGBA frame, or `undefined` when nothing
  * in it is vivid. Area is only a gate (a hue needs `MIN_SHARE` of the picture);
  * among the hues that pass, the most saturated wins. So a pink t-shirt on a
  * picture that is 90 % beige is `primary`.
@@ -63,7 +63,7 @@ export function vivid(
       if (bin) {
         bin.count += 1;
         bin.score += score;
-        // Weighted by vividness, so the vivid pixels of a hue lead its colour.
+        // Weighted by vividness, so the vivid pixels of a hue lead its color.
         bin.sum[0] += r * score;
         bin.sum[1] += g * score;
         bin.sum[2] += b * score;
@@ -88,7 +88,7 @@ export function vivid(
   const [hue] = toHsl(primary);
   const apart = (gap: number) =>
     ranked.find((c) => hueGap(toHsl(c)[0], hue) >= gap);
-  // A real colour of the picture, far from `primary`, then merely different;
+  // A real color of the picture, far from `primary`, then merely different;
   // a picture with a single hue has only `primary`.
   return [primary, apart(MIN_HUE_GAP) ?? apart(CLOSE_HUE_GAP) ?? primary];
 }

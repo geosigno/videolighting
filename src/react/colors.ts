@@ -5,7 +5,7 @@ import { useGlowContext } from "./provider.js";
 const serverSnapshot = () => NEUTRAL;
 
 /**
- * The video's smoothed colours as React state (default: the provider's
+ * The video's smoothed colors as React state (default: the provider's
  * video). One render per display frame while they move, at most `maxFps`
  * per second when given: the cost is that of the component using it.
  */
@@ -22,7 +22,7 @@ export function useColors(
       if (!target) {
         return () => undefined;
       }
-      // Its own handle: the colours only move while someone listens.
+      // Its own handle: the colors only move while someone listens.
       const handle = watch(target, read);
       let last = Number.NEGATIVE_INFINITY;
       let timer: ReturnType<typeof setTimeout> | undefined;
@@ -57,7 +57,7 @@ export function useColors(
 }
 
 /**
- * Calls `callback` with the smoothed colours on every display frame while they
+ * Calls `callback` with the smoothed colors on every display frame while they
  * move, without ever rendering (for what animates). A new `callback` each
  * render does not resubscribe.
  */

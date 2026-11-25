@@ -2,7 +2,7 @@ import type { Bus } from "./bus.js";
 import { css, flat, mmss } from "./colors.js";
 
 /**
- * Cuts detected from the colours alone: how far the edge colours jump between
+ * Cuts detected from the colors alone: how far the edge colors jump between
  * two sampled frames, against what is usual for this video.
  */
 export function mountScenes(

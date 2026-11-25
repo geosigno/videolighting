@@ -4,7 +4,7 @@ export type EffectName = "halo" | "ambient" | "theme";
 
 export type Aspect = "16:9" | "4:3" | "21:9" | "9:16";
 
-/** The video's own colours, drawn softly; or its most vivid ones, pushed. */
+/** The video's own colors, drawn softly; or its most vivid ones, pushed. */
 export type Variant = "natural" | "vibrant";
 
 export interface PageState {

@@ -28,7 +28,7 @@ test.describe("theme", () => {
 
   // The page has no `minContrast` input: the vanilla `theme` runs with it on
   // the card's element, next to the page's ambient.
-  test("keeps the video colour when there is no limit", async ({ page }) => {
+  test("keeps the video color when there is no limit", async ({ page }) => {
     await open(page, { effects: ["ambient"] });
     await page.evaluate(
       ([video, host]) => {
@@ -57,7 +57,7 @@ test.describe("theme", () => {
   // The variables are inherited: each write restyles everything under the
   // element, so they must not follow the display's frame rate.
   test("writes its variables at most 10 times a second", async ({ page }) => {
-    // Red for 2 s, then blue: the colours move after each change.
+    // Red for 2 s, then blue: the colors move after each change.
     await open(page, { effects: ["theme"], src: "/shift-360.webm" });
     const gaps = await page.evaluate(async (host) => {
       const times: number[] = [];

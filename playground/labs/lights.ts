@@ -3,7 +3,7 @@ import type { Bus } from "./bus.js";
 import { css, ease, every, mean } from "./colors.js";
 
 /**
- * The colours as data for real lamps, simulated here: a 24-LED strip around the
+ * The colors as data for real lamps, simulated here: a 24-LED strip around the
  * screen (WLED style) and four room lamps (Philips Hue style), both sent at the
  * 10 Hz a bridge accepts. No network involved.
  */
@@ -11,7 +11,7 @@ import { css, ease, every, mean } from "./colors.js";
 const LEDS = 24;
 const BRIDGE_HZ = 10;
 
-/** Hue's "xy" colour from sRGB (the formula from Philips' developer docs). */
+/** Hue's "xy" color from sRGB (the formula from Philips' developer docs). */
 function toXy([r, g, b]: Rgb): [number, number] {
   const lin = (v: number) => {
     const c = v / 255;

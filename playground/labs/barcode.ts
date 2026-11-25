@@ -2,7 +2,7 @@ import type { Bus } from "./bus.js";
 import { css, mean } from "./colors.js";
 
 /**
- * A progress bar that paints itself with the colours of the movie as it plays:
+ * A progress bar that paints itself with the colors of the movie as it plays:
  * the upper half from the top edge, the lower half from the bottom edge. Click
  * to seek.
  */

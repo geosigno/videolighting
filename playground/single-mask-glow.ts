@@ -24,7 +24,7 @@ const middle = (a: Rgb, b: Rgb): Rgb => [
   Math.round((a[2] + b[2]) / 2),
 ];
 
-/** Stop positions for a ribbon of `count` zones: 0, the centre of each zone, 1. */
+/** Stop positions for a ribbon of `count` zones: 0, the center of each zone, 1. */
 const fractionsFor = (count: number) => [
   0,
   ...Array.from({ length: count }, (_, i) => (i + 0.5) / count),

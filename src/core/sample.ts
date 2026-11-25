@@ -7,7 +7,7 @@ export interface EdgeColors {
   left: Rgb[];
   right: Rgb[];
   top: Rgb[];
-  /** The two most vivid colours of the whole frame, if it has any. */
+  /** The two most vivid colors of the whole frame, if it has any. */
   vivid?: [Rgb, Rgb];
 }
 

@@ -12,7 +12,7 @@ import "../nav.js";
 import "./ambient-lab.css";
 
 /**
- * Throwaway lab: several ways to turn the video's colours into a page
+ * Throwaway lab: several ways to turn the video's colors into a page
  * background, side by side on one read. Each variant is a function that fills
  * its tile and returns how to stop it.
  */
@@ -53,7 +53,7 @@ interface BlobSpec {
   size: string;
 }
 
-/** A flat colour under a fixed radial mask that drifts: a colour change repaints a fill, not a gradient. */
+/** A flat color under a fixed radial mask that drifts: a color change repaints a fill, not a gradient. */
 function addBlob(tile: HTMLElement, spec: BlobSpec) {
   const dot = document.createElement("div");
   dot.className = "al-blob";
@@ -70,7 +70,7 @@ function addBlob(tile: HTMLElement, spec: BlobSpec) {
   );
 }
 
-/** The three smoothed colours into CSS variables on the tile, timed. */
+/** The three smoothed colors into CSS variables on the tile, timed. */
 function followColors(tile: HTMLElement, watcher: Watcher) {
   const timer = timed((colors: ReturnType<Watcher["state"]>) => {
     tile.style.setProperty("--p", css(colors.vibrant.primary));
@@ -81,7 +81,7 @@ function followColors(tile: HTMLElement, watcher: Watcher) {
   return { cost: timer.cost, destroy: stop };
 }
 
-/** Edge colours smoothed one sample at a time (the raw read flickers). */
+/** Edge colors smoothed one sample at a time (the raw read flickers). */
 function smoothedEdges(
   watcher: Watcher,
   onChange: (edges: EdgeColors) => void
@@ -144,9 +144,9 @@ const BLOB_SET = [
 ] as const;
 
 interface BlobMode {
-  /** Write each blob's colour on the blob itself, not as a variable inherited from the tile. */
+  /** Write each blob's color on the blob itself, not as a variable inherited from the tile. */
   direct: boolean;
-  /** A radial gradient with the colour in it, instead of a flat colour under a fixed mask. */
+  /** A radial gradient with the color in it, instead of a flat color under a fixed mask. */
   gradient: boolean;
   /** `will-change: transform` on the blobs, `contain: paint` on the tile. */
   hints: boolean;
@@ -218,7 +218,7 @@ interface MosaicMode {
 const at = (colors: Rgb[], t: number): Rgb =>
   colors[Math.round(t * (colors.length - 1))] ?? [0, 0, 0];
 
-/** The colour of the cell at (u, v), both 0 to 1: the four edges blended. */
+/** The color of the cell at (u, v), both 0 to 1: the four edges blended. */
 function cellColor(edges: EdgeColors, u: number, v: number): Rgb {
   const top = at(edges.top, u);
   const bottom = at(edges.bottom, u);
@@ -326,7 +326,7 @@ const VARIANTS: Variant[] = [
       });
       return followColors(tile, watcher);
     },
-    note: "Two large blobs, slower: calmer, one colour fewer",
+    note: "Two large blobs, slower: calmer, one color fewer",
     title: "Two calm blobs",
   },
   {
@@ -358,7 +358,7 @@ const VARIANTS: Variant[] = [
       });
       return { cost: timer.cost, destroy: smoothedEdges(watcher, timer.run) };
     },
-    note: "The colour of each side fades inwards: where the colour comes from stays where it comes from",
+    note: "The color of each side fades inwards: where the color comes from stays where it comes from",
     title: "Sides",
   },
   {
@@ -392,7 +392,7 @@ const VARIANTS: Variant[] = [
       });
       return { cost: timer.cost, destroy: smoothedEdges(watcher, timer.run) };
     },
-    note: "One blob per side, in that side's colour, drifting a little",
+    note: "One blob per side, in that side's color, drifting a little",
     title: "Sides + drift",
   },
   {
@@ -423,7 +423,7 @@ const VARIANTS: Variant[] = [
       );
       return followColors(tile, watcher);
     },
-    note: "One oversized gradient sliding slowly: the cheapest shape, but each colour change repaints a gradient",
+    note: "One oversized gradient sliding slowly: the cheapest shape, but each color change repaints a gradient",
     title: "Sliding gradient",
   },
 ];
@@ -439,7 +439,7 @@ const OPT_VARIANTS: Variant[] = [
   {
     id: "blobs-direct",
     mount: blobsMount({ direct: true, gradient: false, hints: false }),
-    note: "colour written on each blob, no inherited variable",
+    note: "color written on each blob, no inherited variable",
     title: "Blobs direct",
   },
   {
@@ -457,13 +457,13 @@ const OPT_VARIANTS: Variant[] = [
   {
     id: "blobs-gradient-vars",
     mount: blobsMount({ direct: false, gradient: true, hints: false }),
-    note: "gradient with the colour taken from the tile variable: the library's variables stay",
+    note: "gradient with the color taken from the tile variable: the library's variables stay",
     title: "Blobs gradient (variables kept)",
   },
   {
     id: "blobs-gradient",
     mount: blobsMount({ direct: true, gradient: true, hints: false }),
-    note: "gradient with the colour, no mask",
+    note: "gradient with the color, no mask",
     title: "Blobs gradient",
   },
   {
@@ -530,7 +530,7 @@ const COMPARE_PAIRS = [
   [
     "blobs-ctrl",
     "D2 · Actuel : taches avec masque",
-    "A flat colour under a fixed radial mask",
+    "A flat color under a fixed radial mask",
   ],
   [
     "blobs-gradient-vars",

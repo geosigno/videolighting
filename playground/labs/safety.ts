@@ -5,7 +5,7 @@ import { css, ease, luminance } from "./colors.js";
 /**
  * Flash safety: a glow that mirrors a strobing scene would flash too (WCAG 2.3.1
  * allows at most 3 flashes a second). Counts luminance flashes in the raw
- * colour and in a protected one that slows its changes down.
+ * color and in a protected one that slows its changes down.
  */
 
 interface Sample {

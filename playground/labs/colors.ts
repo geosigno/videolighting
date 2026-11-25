@@ -1,7 +1,7 @@
 import type { EdgeColors, Rgb } from "../internal.js";
 
 /**
- * Throwaway colour helpers for the labs. Nothing here is part of the library.
+ * Throwaway color helpers for the labs. Nothing here is part of the library.
  */
 
 export const flat = (colors: EdgeColors): Rgb[] => [
@@ -102,8 +102,8 @@ export function contrast(a: Rgb, b: Rgb): number {
 const WHITE: Rgb = [255, 255, 255];
 
 /**
- * A background colour for white text: darkened (same hue and saturation) until
- * white on it reaches `min`:1 contrast. White text never changes; the colour
+ * A background color for white text: darkened (same hue and saturation) until
+ * white on it reaches `min`:1 contrast. White text never changes; the color
  * is the one that gives way, so a bright yellow becomes an olive or a gold.
  */
 export function forWhiteText(bg: Rgb, min = 4.5): { bg: Rgb; ratio: number } {
@@ -121,10 +121,10 @@ const distance = (a: Rgb, b: Rgb) =>
   Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 
 /**
- * `count` dominant colours of a set of colours, most important first, by area:
- * each is the mean of the colours that belong to it, so it is a colour that is
+ * `count` dominant colors of a set of colors, most important first, by area:
+ * each is the mean of the colors that belong to it, so it is a color that is
  * really in the picture. With `vivid`, saturated mid-tones weigh more than
- * greys (a dark scene with one red lamp gives the red), which is not faithful.
+ * grays (a dark scene with one red lamp gives the red), which is not faithful.
  */
 export function palette(points: Rgb[], count = 2, vivid = false): Rgb[] {
   if (points.length === 0) {
@@ -136,26 +136,26 @@ export function palette(points: Rgb[], count = 2, vivid = false): Rgb[] {
   });
   // Seeds: the point farthest from the overall mean, then the one farthest
   // from the seeds so far.
-  const centre = mean(points);
+  const center = mean(points);
   const first = weighted.reduce((a, b) =>
-    b.w * distance(b.p, centre) > a.w * distance(a.p, centre) ? b : a
+    b.w * distance(b.p, center) > a.w * distance(a.p, center) ? b : a
   );
-  const centres: Rgb[] = [first.p];
-  while (centres.length < count) {
+  const centers: Rgb[] = [first.p];
+  while (centers.length < count) {
     const next = weighted.reduce((a, b) => {
       const score = (x: { p: Rgb; w: number }) =>
-        x.w * Math.min(...centres.map((c) => distance(x.p, c)));
+        x.w * Math.min(...centers.map((c) => distance(x.p, c)));
       return score(b) > score(a) ? b : a;
     });
-    centres.push(next.p);
+    centers.push(next.p);
   }
-  const weights = centres.map(() => 0);
+  const weights = centers.map(() => 0);
   for (let round = 0; round < 6; round += 1) {
-    const sums = centres.map(() => ({ r: 0, g: 0, b: 0, w: 0 }));
+    const sums = centers.map(() => ({ r: 0, g: 0, b: 0, w: 0 }));
     for (const { p, w } of weighted) {
       let best = 0;
-      for (const [i, c] of centres.entries()) {
-        if (distance(p, c) < distance(p, centres[best] ?? c)) {
+      for (const [i, c] of centers.entries()) {
+        if (distance(p, c) < distance(p, centers[best] ?? c)) {
           best = i;
         }
       }
@@ -169,16 +169,16 @@ export function palette(points: Rgb[], count = 2, vivid = false): Rgb[] {
     }
     for (const [i, sum] of sums.entries()) {
       if (sum.w > 0) {
-        centres[i] = [sum.r / sum.w, sum.g / sum.w, sum.b / sum.w];
+        centers[i] = [sum.r / sum.w, sum.g / sum.w, sum.b / sum.w];
       }
       weights[i] = sum.w;
     }
   }
-  const order = centres
+  const order = centers
     .map((c, i) => ({ c, w: weights[i] ?? 0 }))
     .sort((a, b) => b.w - a.w)
     .map(({ c }) => c);
-  // Two colours that are nearly the same make a dull pair: shift the hue.
+  // Two colors that are nearly the same make a dull pair: shift the hue.
   const [top, second] = order;
   if (top && second && count >= 2 && distance(top, second) < 45) {
     const [h, s, l] = toHsl(top);

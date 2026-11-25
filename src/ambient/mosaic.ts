@@ -14,17 +14,17 @@ const OVERFLOW = "14%";
 const BLUR_PER_WIDTH = 0.027;
 const BLUR_MIN = 8;
 const BLUR_MAX = 48;
-/** Time constant of the smoothing of the 40 colours, seconds (the core's default). */
+/** Time constant of the smoothing of the 40 colors, seconds (the core's default). */
 const TAU = 0.12;
 /** No sample for this long: the video has stopped, and the display frames finish the fade. */
 const SETTLE_MS = 120;
 
-/** The colour at `t` (0 to 1) along one side of the picture; black if the side has no colour. */
+/** The color at `t` (0 to 1) along one side of the picture; black if the side has no color. */
 const along = (colors: Rgb[], t: number): Rgb =>
   colors[Math.round(t * (colors.length - 1))] ?? [0, 0, 0];
 
 /**
- * The colour of the cell at (u, v), both 0 to 1 from the top left: the four
+ * The color of the cell at (u, v), both 0 to 1 from the top left: the four
  * edges blended, the top and bottom ones by column, the left and right ones by
  * row, each weighted by how close the cell is to it. Channels are not rounded.
  */
@@ -38,7 +38,7 @@ export function cellColor(edges: EdgeColors, u: number, v: number): Rgb {
   return [channel(0), channel(1), channel(2)];
 }
 
-/** The 40 colours the grid should show for these edges, row by row. */
+/** The 40 colors the grid should show for these edges, row by row. */
 function goalFor(edges: EdgeColors): Rgb[] {
   return Array.from({ length: MOSAIC_COLS * MOSAIC_ROWS }, (_, index) =>
     cellColor(
@@ -52,7 +52,7 @@ function goalFor(edges: EdgeColors): Rgb[] {
 /**
  * A soft picture of the video's surroundings: a canvas of 8 x 5 pixels, one per
  * cell, that the browser scales up smoothly and a CSS blur then softens. Fed by
- * the raw edge colours (`onSample`), smoothed here, one step per sample. It sets
+ * the raw edge colors (`onSample`), smoothed here, one step per sample. It sets
  * no CSS variable: there is nothing to read from it but the picture.
  */
 export function mountMosaic(layer: Layer, watcher: Watcher): () => void {
@@ -84,7 +84,7 @@ export function mountMosaic(layer: Layer, watcher: Watcher): () => void {
   const resize = new ResizeObserver(blur);
   resize.observe(layer.element);
 
-  // The 40 colours move one step per sample. A video that stops (paused, seeked
+  // The 40 colors move one step per sample. A video that stops (paused, seeked
   // then still) sends no more samples, so a fade in progress would freeze half
   // way: when samples stop, the display frames finish it. Nothing is drawn when
   // nothing moves.

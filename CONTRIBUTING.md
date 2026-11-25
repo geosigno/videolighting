@@ -1,4 +1,4 @@
-# Contributing to videoLighting
+# Contributing to videolighting
 
 Thanks for your interest in contributing!
 
@@ -31,7 +31,7 @@ The CI runs them.
 ## Tests
 
 Few tests, all meaningful. End-to-end tests come first: a unit test exists only where an
-end-to-end test cannot cover the behaviour. Everything lives under `test/`.
+end-to-end test cannot cover the behavior. Everything lives under `test/`.
 
 Tests of speed (frame rate, time budgets) are tagged `@perf`. A shared CI runner has no GPU, so the
 CI leaves them out and runs Chromium and Firefox; run everything on the three engines on your machine with
@@ -51,7 +51,7 @@ CI leaves them out and runs Chromium and Firefox; run everything on the three en
 
 ## Project layout
 
-- `src/core`: reading the frames and the colours (shared by every effect)
+- `src/core`: reading the frames and the colors (shared by every effect)
 - `src/halo`, `src/ambient`, `src/theme`: the three effects
 - `src/react`: the React components and hooks
 - `playground/`: tools for developing the plugin (not published)

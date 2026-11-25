@@ -20,7 +20,7 @@ export interface PosterWatch {
 }
 
 /**
- * Colours from the `poster` image while it is what the video shows (see
+ * Colors from the `poster` image while it is what the video shows (see
  * `posterShown`), so an effect matches it and is not blank before the first
  * frame. The poster is read as soon as it is set, and again when it changes.
  * Once the video has played or been sought, or if the image cannot be read (no

@@ -13,7 +13,7 @@ import "./labs.css";
 
 /**
  * Glow labs: throwaway proofs of concept. Each lab gets the video and a bus of
- * colours from the library, and draws something with them.
+ * colors from the library, and draws something with them.
  */
 
 function byId<T extends HTMLElement>(id: string): T {
@@ -39,32 +39,32 @@ interface Lab {
 const LABS: Lab[] = [
   {
     blurb:
-      "Two dominant colours become slow drifting blobs, like Apple Music. Colours fade in CSS (@property), updated 4 times a second.",
+      "Two dominant colors become slow drifting blobs, like Apple Music. Colors fade in CSS (@property), updated 4 times a second.",
     mount: (host, ctx) => mountAmbient(host, ctx),
     title: "Animated background",
   },
   {
     blurb:
-      "--video-primary / --video-secondary on any container. Text stays white: the colour is capped (darkened) until white on it reaches the contrast you pick. Smoothed, since a theme that blinked 25 times a second would be unusable.",
+      "--video-primary / --video-secondary on any container. Text stays white: the color is capped (darkened) until white on it reaches the contrast you pick. Smoothed, since a theme that blinked 25 times a second would be unusable.",
     mount: mountTheme,
     title: "Components that follow the video",
   },
   {
     blurb:
-      "A progress bar painted with the colours of the movie as it plays. Click to seek.",
+      "A progress bar painted with the colors of the movie as it plays. Click to seek.",
     mount: mountBarcode,
-    title: "Colour barcode",
+    title: "Color barcode",
     wide: true,
   },
   {
     blurb:
-      "Cuts found from the colours alone; cuts at least 5 s apart become chapter suggestions.",
+      "Cuts found from the colors alone; cuts at least 5 s apart become chapter suggestions.",
     mount: mountScenes,
     title: "Scene cuts",
   },
   {
     blurb:
-      "The edge colours as data for a WLED strip and Hue lamps, sent at 10 Hz. Simulated, no network.",
+      "The edge colors as data for a WLED strip and Hue lamps, sent at 10 Hz. Simulated, no network.",
     mount: mountLights,
     title: "Lights",
   },

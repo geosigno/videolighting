@@ -3,19 +3,19 @@ import type { Bus } from "./bus.js";
 import { ease } from "./colors.js";
 
 /**
- * The one place where the video's colours are decided. Everything that wants
- * "the colour of the video" (the background, the components, soon the rest)
- * reads it from here, so they always agree. The colours are the video's own:
+ * The one place where the video's colors are decided. Everything that wants
+ * "the color of the video" (the background, the components, soon the rest)
+ * reads it from here, so they always agree. The colors are the video's own:
  * no saturation boost, no lightness change. A consumer that has to bend a
- * colour (text contrast, say) does it on its own side and says so.
+ * color (text contrast, say) does it on its own side and says so.
  */
 
 export interface Colors {
-  /** Mean of the colours along the video's edges. */
+  /** Mean of the colors along the video's edges. */
   mean: Rgb;
-  /** Dominant colour, by area. */
+  /** Dominant color, by area. */
   primary: Rgb;
-  /** Second dominant colour, by area. */
+  /** Second dominant color, by area. */
   secondary: Rgb;
 }
 
@@ -23,7 +23,7 @@ export interface ColorCore {
   destroy: () => void;
   settings: { tau: number };
   state: () => Colors;
-  /** Called on every display frame with the smoothed colours. */
+  /** Called on every display frame with the smoothed colors. */
   subscribe: (listener: (colors: Colors) => void) => () => void;
 }
 
@@ -36,7 +36,7 @@ export interface LabContext {
 const distance = (a: Rgb, b: Rgb) =>
   Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 
-/** The two dominant colours keep their roles from one frame to the next. */
+/** The two dominant colors keep their roles from one frame to the next. */
 function keepOrder(previous: Rgb[], next: Rgb[]): Rgb[] {
   const [p0, p1] = previous;
   const [n0, n1] = next;

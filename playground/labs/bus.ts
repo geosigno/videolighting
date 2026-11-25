@@ -6,9 +6,9 @@ export interface Tick {
   colors: EdgeColors;
   /** Milliseconds since the previous tick. */
   dt: number;
-  /** Mean of all the edge colours. */
+  /** Mean of all the edge colors. */
   mean: Rgb;
-  /** Two dominant colours, most important first. */
+  /** Two dominant colors, most important first. */
   palette: Rgb[];
   /** `video.currentTime` when the frame was sampled. */
   time: number;
@@ -23,7 +23,7 @@ export interface Bus {
 
 /**
  * One `watchVideo` shared by every lab: the library is used as it is, the labs
- * only add what they need on top of the colours it returns.
+ * only add what they need on top of the colors it returns.
  */
 export function createBus(video: HTMLVideoElement): Bus {
   const listeners = new Set<(tick: Tick) => void>();

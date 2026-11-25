@@ -7,7 +7,7 @@ import Hls from "hls.js";
  * - noplay: the video itself never plays
  * - unknown: no prior knowledge, just observe
  *
- * Expectations were pinned from observed Chrome behaviour: this page doubles as
+ * Expectations were pinned from observed Chrome behavior: this page doubles as
  * a regression check. Other browsers are what we are here to discover.
  */
 export type Expect = "readable" | "blocked" | "noplay" | "unknown";

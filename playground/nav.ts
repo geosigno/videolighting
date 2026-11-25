@@ -15,7 +15,7 @@ const LINKS: NavLink[] = [
     label: "Playground",
   },
   {
-    answers: "Which sources and browsers give colours at all?",
+    answers: "Which sources and browsers give colors at all?",
     href: "/compat.html",
     label: "Compat",
   },
@@ -35,7 +35,7 @@ const LINKS: NavLink[] = [
     label: "Load",
   },
   {
-    answers: "What else can the colours of a video drive?",
+    answers: "What else can the colors of a video drive?",
     href: "/labs/",
     label: "Labs",
   },

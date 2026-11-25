@@ -40,7 +40,7 @@ type Curve = (distance: number) => number;
 export interface GlowConfig {
   /**
    * One blur of this CSS length over the whole layer (default: no filter). The
-   * bands then run twice that far under the video, so the blur has colour to
+   * bands then run twice that far under the video, so the blur has color to
    * draw from on both sides of the edge. One filter for the layer, not one per
    * piece: per piece measured three times the GPU time of the plain halo, and
    * stalls of over a second under load.
@@ -56,7 +56,7 @@ export interface GlowConfig {
   /** Steepness of the fade. Higher: stronger at the edge, fainter tail. */
   exponent?: number;
   /**
-   * false drops the fade masks: the pieces are plain colour as far as the
+   * false drops the fade masks: the pieces are plain color as far as the
    * reach, and the layer takes `--vl-opacity`. What `blur` is made for.
    */
   masks?: boolean;
@@ -256,7 +256,7 @@ export function createGlowWith(host: HTMLElement, config: GlowConfig): Glow {
     element.style.filter = `blur(${blur})`;
     // Its own compositing layer, so the blur is applied to the layer as a whole.
     // Without it, Safari sometimes repaints only the area of the bands when the
-    // colours change: a sharp rectangle inside the blur of the previous frame.
+    // colors change: a sharp rectangle inside the blur of the previous frame.
     element.style.willChange = "filter";
   }
   if (!withMasks) {
@@ -330,9 +330,9 @@ export function createGlow(host: HTMLElement): Glow {
 }
 
 /**
- * The blurred glow: the same bands and corners in plain colour, softened by one
+ * The blurred glow: the same bands and corners in plain color, softened by one
  * blur. `--vl-blur` (default 40px) is its radius, `--vl-reach` how far the
- * colour goes before the blur, `--vl-opacity` the strength of the whole.
+ * color goes before the blur, `--vl-opacity` the strength of the whole.
  */
 export function createBlurGlow(host: HTMLElement): Glow {
   return createGlowWith(host, { blur: "var(--vl-blur, 40px)", masks: false });

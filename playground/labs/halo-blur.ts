@@ -8,7 +8,7 @@ import "./labs.css";
 
 /**
  * Halo blur lab: the two drawings of the halo side by side, on the same edge
- * colours, with sliders for the blurred one. Also what
+ * colors, with sliders for the blurred one. Also what
  * `scripts/render-cost.mjs --path /labs/halo-blur.html` measures.
  */
 
@@ -18,7 +18,7 @@ interface Settings {
   spread: number;
 }
 
-/** The bands that fade, as `variant: "vibrant"` draws them (colours not pushed here). */
+/** The bands that fade, as `variant: "vibrant"` draws them (colors not pushed here). */
 function faded(host: HTMLElement): Glow {
   return createGlowWith(host, {});
 }
@@ -60,13 +60,13 @@ const ALL = [
     create: faded,
     id: "vibrant",
     name: "Halo, vibrant",
-    note: "Bands that fade with the distance: fade masks, no filter. The sliders do not touch it, and the colours are not pushed here.",
+    note: "Bands that fade with the distance: fade masks, no filter. The sliders do not touch it, and the colors are not pushed here.",
   },
   {
     create: blurred,
     id: "natural",
     name: "Halo, natural",
-    note: "The same bands and corners in plain colour, masks off, one blur for the whole layer. Spread is how far the colour goes before the blur.",
+    note: "The same bands and corners in plain color, masks off, one blur for the whole layer. Spread is how far the color goes before the blur.",
   },
 ];
 const VARIANTS = ALL.filter((variant) => (only ?? SHOWN).includes(variant.id));

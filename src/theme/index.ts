@@ -6,14 +6,14 @@ import type { Colors } from "../core/watcher.js";
 
 export interface ThemeOptions {
   /**
-   * Contrast white text must reach on the colours, as a ratio. The colour is
+   * Contrast white text must reach on the colors, as a ratio. The color is
    * darkened, only as much as needed, to get there. Default 4.5 (WCAG AA);
-   * 1 leaves the video's colours as they are.
+   * 1 leaves the video's colors as they are.
    */
   minContrast?: number;
   /**
-   * `"vibrant"` (default): the two most vivid colours of the picture, with
-   * their saturation pushed. `"natural"`: the two dominant colours along the
+   * `"vibrant"` (default): the two most vivid colors of the picture, with
+   * their saturation pushed. `"natural"`: the two dominant colors along the
    * video's edges, as they are.
    */
   variant?: "natural" | "vibrant";

@@ -9,7 +9,7 @@ import {
 } from "./helpers.js";
 
 /**
- * Behaviour of the React layer on the reference page, driven through its
+ * Behavior of the React layer on the reference page, driven through its
  * collapsed "Checks" section (test-only fixtures that cost nothing until used),
  * its controls and `?lateVideo=1`.
  */
@@ -67,7 +67,7 @@ test.describe("react layer", () => {
     expect(page.url()).toContain("method=canvas");
 
     // The same goes for the main thread: a fresh read, its sample count
-    // starting again from zero, and the colours keep coming.
+    // starting again from zero, and the colors keep coming.
     await expect
       .poll(() => samplesOf(page), { timeout: 10_000 })
       .toBeGreaterThan(40);
@@ -351,7 +351,7 @@ test.describe("react layer", () => {
   });
 
   /**
-   * Counts the read's smoothed-colour updates through a raw handle, with the
+   * Counts the read's smoothed-color updates through a raw handle, with the
    * demos' counts, for at least `ms` and until `minFrames` updates (the clip
    * loops), up to 30 s.
    */
@@ -401,8 +401,8 @@ test.describe("react layer", () => {
     Math.abs(value - reference) <= Math.max(0.2 * reference, 3);
   const MIN_UPDATES = 40;
 
-  test("useColors renders once per colour update", async ({ page }) => {
-    // A clip whose overall colour changes (red, then blue, in a loop).
+  test("useColors renders once per color update", async ({ page }) => {
+    // A clip whose overall color changes (red, then blue, in a loop).
     await open(page, "?src=%2Fshift-360.webm");
     await openChecks(page);
     await page.getByTestId("check-colors").check();

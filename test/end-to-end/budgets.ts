@@ -22,7 +22,7 @@ export const base = {
   watcherMs: { 360: 1.5, 1080: 1.5, 2160: 1.5 },
   /** Mean main-thread time per sample. */
   mainThreadMs: { 360: 4, 1080: 8, 2160: 16 },
-  /** Median time from asking for a frame to having its colours. */
+  /** Median time from asking for a frame to having its colors. */
   latencyMs: { 360: 10, 1080: 20, 2160: 40 },
 } as const;
 

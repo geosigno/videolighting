@@ -1,6 +1,6 @@
 /**
  * Static file servers that play the role of "other origins" for the compat page.
- * Same files (playground/public), three CORS behaviours, all with Range support
+ * Same files (playground/public), three CORS behaviors, all with Range support
  * like a real CDN:
  *   5200  no CORS headers at all
  *   5201  full CORS (Access-Control-Allow-Origin: *)

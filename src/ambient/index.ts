@@ -14,8 +14,8 @@ export interface AmbientOptions {
   animate?: boolean;
   /**
    * `"vibrant"` (default): three soft blobs in the picture's most vivid
-   * colours, saturation pushed, drifting slowly. `"natural"`: a soft picture
-   * of the video's surroundings, in its own colours. Not called `style`:
+   * colors, saturation pushed, drifting slowly. `"natural"`: a soft picture
+   * of the video's surroundings, in its own colors. Not called `style`:
    * `<Ambient style>` is already the CSS style of the React component.
    */
   variant?: "natural" | "vibrant";
@@ -25,12 +25,12 @@ export interface AmbientOptions {
 const BASE = "#101018";
 
 /**
- * Three soft blobs in the video's vivid colours and its mean, saturation
- * pushed, drifting slowly, like a music player's background. The colours are CSS
+ * Three soft blobs in the video's vivid colors and its mean, saturation
+ * pushed, drifting slowly, like a music player's background. The colors are CSS
  * custom properties on the layer (`--vl-primary`, `--vl-secondary`,
- * `--vl-mean`); each blob is one radial gradient from its colour to
+ * `--vl-mean`); each blob is one radial gradient from its color to
  * transparent. A gradient with no mask measured about 40 % less GPU than a flat
- * colour under a fixed radial mask, for the same picture.
+ * color under a fixed radial mask, for the same picture.
  */
 const BLOBS = [
   {
@@ -54,10 +54,10 @@ const BLOBS = [
 ] as const;
 
 /**
- * The blobs change colour at most every this many ms (30 times a second), not
+ * The blobs change color at most every this many ms (30 times a second), not
  * on every display frame: each write repaints the three gradients. Measured on
  * a 120 Hz screen (Chrome): 6 points of a core less in the page's process and 8
- * less in the GPU's, for a colour that fades over a tenth of a second anyway.
+ * less in the GPU's, for a color that fades over a tenth of a second anyway.
  */
 const WRITE_MS = 33;
 

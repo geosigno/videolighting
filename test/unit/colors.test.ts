@@ -18,14 +18,14 @@ describe("wcag helpers", () => {
 });
 
 describe("forWhiteText", () => {
-  it("darkens a bright colour until white reads on it, keeping its hue", () => {
+  it("darkens a bright color until white reads on it, keeping its hue", () => {
     const yellow: Rgb = [255, 255, 0];
     const { bg, ratio } = forWhiteText(yellow);
     expect(ratio).toBeGreaterThanOrEqual(4.5);
     expect(Math.abs(toHsl(bg)[0] - toHsl(yellow)[0])).toBeLessThan(2);
   });
 
-  it("leaves a colour that already reads alone", () => {
+  it("leaves a color that already reads alone", () => {
     const dark: Rgb = [20, 20, 60];
     expect(forWhiteText(dark).bg).toEqual(dark);
   });
@@ -37,7 +37,7 @@ describe("forWhiteText", () => {
 });
 
 describe("palette", () => {
-  it("returns the dominant colours by area, biggest first", () => {
+  it("returns the dominant colors by area, biggest first", () => {
     const red: Rgb = [250, 10, 10];
     const blue: Rgb = [10, 10, 250];
     const [first, second] = palette([red, red, red, blue]);
