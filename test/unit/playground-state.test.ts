@@ -19,6 +19,7 @@ describe("page state in the URL", () => {
       aspect: "9:16",
       effects: ["theme"],
       halo: "natural",
+      light: true,
       mainThread: true,
       method: "canvas",
       panel: false,

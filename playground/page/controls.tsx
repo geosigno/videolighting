@@ -91,6 +91,11 @@ export function Controls({
       onChange({ mainThread: event.target.checked }),
     [onChange]
   );
+  const onFlag = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) =>
+      onChange({ [event.target.name]: event.target.checked }),
+    [onChange]
+  );
   const onEffect = useCallback(
     (event: ChangeEvent<HTMLInputElement>) =>
       setEffect(event.target.value as EffectName, event.target.checked),
@@ -144,6 +149,16 @@ export function Controls({
           </select>
         </label>
       ))}
+      <label>
+        <input
+          checked={state.light}
+          data-testid="light"
+          name="light"
+          onChange={onFlag}
+          type="checkbox"
+        />{" "}
+        light page
+      </label>
       <fieldset className="pg-aspects">
         <legend>format</legend>
         {ASPECTS.map((aspect) => (

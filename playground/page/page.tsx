@@ -69,6 +69,11 @@ export function Page({ start }: { start: PageStart }) {
     }
   }, [search]);
 
+  // The light page is a class on the root: the tokens of `base.css` switch with it.
+  useEffect(() => {
+    document.documentElement.classList.toggle("pg-light", state.light);
+  }, [state.light]);
+
   const change = useCallback(
     (next: Partial<PageState>) => setState((now) => ({ ...now, ...next })),
     []

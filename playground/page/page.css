@@ -1,3 +1,15 @@
+/* The light page (`light=1`): the tokens of `base.css`, light. */
+:root.pg-light {
+  --bg: #fff;
+  --ink: #15151c;
+  --muted: #5b5b68;
+  --line: #dcdce4;
+  --panel: #f4f4f6;
+  --control: #f0f0f3;
+  --control-line: #c8c8d2;
+  --accent: #2f4fc4;
+  color-scheme: light;
+}
 .pg-head {
   padding: 24px 24px 0;
 }
@@ -24,8 +36,8 @@
   font: inherit;
   color: inherit;
   cursor: pointer;
-  background: #1c1c24;
-  border: 1px solid #2a2a34;
+  background: var(--control);
+  border: 1px solid var(--line);
   border-radius: 6px;
 }
 .pg-aspects button[aria-pressed="true"] {
@@ -92,8 +104,8 @@
   width: 280px;
   padding: 14px;
   margin-top: 24px;
-  background: #15151c;
-  border: 1px solid #2a2a34;
+  background: var(--panel);
+  border: 1px solid var(--line);
   border-radius: 12px;
 }
 .pg-buttons {
@@ -138,12 +150,12 @@
   margin: 0;
   contain: strict;
   font-size: 12px;
-  background: #15151c;
-  border: 1px solid #2a2a34;
+  background: var(--panel);
+  border: 1px solid var(--line);
   border-radius: 10px;
 }
 .pg-metrics dt {
-  color: #9a9aa8;
+  color: var(--muted);
 }
 .pg-metrics dd {
   margin: 0;

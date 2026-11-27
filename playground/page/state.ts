@@ -12,6 +12,8 @@ export interface PageState {
   aspect: Aspect;
   effects: EffectName[];
   halo: Variant;
+  /** The page on a white background, to see the effects as a light theme shows them. */
+  light: boolean;
   mainThread: boolean;
   method: MethodChoice;
   panel: boolean;
@@ -38,6 +40,7 @@ export const DEFAULTS: PageState = {
   aspect: "16:9",
   effects: [...EFFECT_ORDER],
   halo: "vibrant",
+  light: false,
   mainThread: false,
   method: "auto",
   panel: true,
@@ -86,6 +89,7 @@ export function parseState(
     aspect: ASPECTS.find((a) => a === aspect) ?? defaults.aspect,
     effects: parseEffects(params.get("effects"), defaults.effects),
     halo: variant("halo"),
+    light: parseBool(params.get("light"), defaults.light),
     mainThread: parseBool(params.get("main"), defaults.mainThread),
     method: METHODS.find((m) => m === method) ?? defaults.method,
     panel: parseBool(params.get("panel"), defaults.panel),
@@ -119,6 +123,9 @@ export function toSearch(
   }
   if (state.mainThread !== defaults.mainThread) {
     params.set("main", "1");
+  }
+  if (state.light !== defaults.light) {
+    params.set("light", "1");
   }
   if (state.panel !== defaults.panel) {
     params.set("panel", "0");
@@ -154,6 +161,9 @@ export function nonDefault(
   }
   if (state.mainThread !== defaults.mainThread) {
     labels.push("main thread");
+  }
+  if (state.light !== defaults.light) {
+    labels.push("light page");
   }
   if (state.panel !== defaults.panel) {
     labels.push("panel off");
