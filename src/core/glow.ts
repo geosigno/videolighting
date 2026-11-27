@@ -1,4 +1,4 @@
-import { css } from "./colors.js";
+import { light } from "./colors.js";
 import { createLayer } from "./layer.js";
 import type { EdgeColors, Rgb } from "./sample.js";
 
@@ -11,6 +11,9 @@ import type { EdgeColors, Rgb } from "./sample.js";
  *    the corner's arc (opaque up to the radius, then the same fade), and the
  *    frame's corner zone as one plain color. The bands start and end on that
  *    same color, so nothing turns around a corner.
+ * Every color is painted as a light (`light`, in `colors.ts`): the darker it is,
+ * the more transparent, so the halo is the same over a dark page and does not
+ * look like a shadow over a light one.
  * The fade is what makes it "strong at the edge, gone further away": it is an
  * explicit curve (`falloffAlpha`), not a by-product of a blur. It is measured
  * from the rounded shape, so each corner's radius matters (see `RADIUS`).
@@ -225,11 +228,11 @@ function paintBand(
 ) {
   const positions = positionsFor(points.length);
   const stops = [
-    `${css(start)} 0%`,
+    `${light(start)} 0%`,
     ...points
       .slice(1, -1)
-      .map((color, i) => `${css(color)} ${positions[i + 2] ?? "50%"}`),
-    `${css(end)} 100%`,
+      .map((color, i) => `${light(color)} ${positions[i + 2] ?? "50%"}`),
+    `${light(end)} 100%`,
   ];
   band.style.backgroundImage = `linear-gradient(${ALONG[side]}, ${stops.join(", ")})`;
 }
@@ -322,7 +325,7 @@ export function createGlowWith(host: HTMLElement, config: GlowConfig): Glow {
       for (const corner of CORNERS) {
         const patch = patches[corner];
         if (patch) {
-          patch.style.backgroundColor = css(zones[corner]);
+          patch.style.backgroundColor = light(zones[corner]);
         }
       }
     },

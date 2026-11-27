@@ -40,6 +40,20 @@ export const css = ([r, g, b]: Rgb, alpha?: number): string =>
     ? `rgb(${Math.round(r)} ${Math.round(g)} ${Math.round(b)})`
     : `rgb(${Math.round(r)} ${Math.round(g)} ${Math.round(b)} / ${alpha})`;
 
+/**
+ * `color` as a light, for the halo: its brightest shade, as opaque as its
+ * strongest channel. Over black it is the same color. Over a light page a dark
+ * color lights little instead of darkening the page like a shadow: only its
+ * tint is left.
+ */
+export function light([r, g, b]: Rgb): string {
+  const strongest = Math.max(r, g, b, 1);
+  const scale = 255 / strongest;
+  // Three decimals, rounded by hand: measured cheaper than `toFixed` on every paint.
+  const alpha = Math.round(strongest / 0.255) / 1000;
+  return `rgb(${Math.round(r * scale)} ${Math.round(g * scale)} ${Math.round(b * scale)} / ${alpha})`;
+}
+
 /** [hue 0-360, saturation 0-1, lightness 0-1] */
 export function toHsl([r, g, b]: Rgb): Rgb {
   const rn = r / 255;

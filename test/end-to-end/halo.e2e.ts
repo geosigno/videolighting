@@ -16,6 +16,23 @@ test.describe("halo", () => {
     expect(b).toBeLessThan(80);
   });
 
+  test("paints a color that is not at full strength brighter and more transparent", async ({
+    page,
+  }) => {
+    await open(page, { effects: ["halo"] });
+    // The top band runs along the green strip, (0, 200, 0): the same light over
+    // black, and no shadow over a light page.
+    await expect
+      .poll(async () => (await stops(page, '[data-vl="halo"] > div', 0)).length)
+      .toBeGreaterThan(6);
+    const top = await stops(page, '[data-vl="halo"] > div', 0);
+    const [r = 0, g = 0, b = 0, alpha = 0] =
+      top[Math.floor(top.length / 2)] ?? [];
+    expect([r, g, b]).toEqual([0, 255, 0]);
+    // WebKit decodes this green up to 18 levels away from the two others.
+    expect(Math.abs(alpha * 255 - 200)).toBeLessThan(25);
+  });
+
   test("fills a rounded video's corners without drawing twice there", async ({
     page,
   }) => {

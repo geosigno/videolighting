@@ -437,19 +437,24 @@ export const NEUTRAL = [24, 24, 30];
 export const far = (a: number[], b: number[]) =>
   Math.hypot(...b.map((v, i) => (a[i] ?? 0) - v));
 
-/** Red, green, blue of every color stop of an element's background gradient. */
+/**
+ * Every color stop of an element's background gradient, as `[red, green, blue,
+ * alpha]`: the halo paints a color in its brightest shade, with the alpha that
+ * gives the color back over black.
+ */
 export async function stops(page: Page, selector: string, nth: number) {
   return await page.evaluate(
     ({ nth: which, selector: query }) => {
       const element = document.querySelectorAll<HTMLElement>(query)[which];
       const image = element ? element.style.backgroundImage : "";
-      return [
-        ...image.matchAll(/rgb\((?<r>\d+)[, ]+(?<g>\d+)[, ]+(?<b>\d+)\)/gu),
-      ].map((m) => [
-        Number(m.groups?.r),
-        Number(m.groups?.g),
-        Number(m.groups?.b),
-      ]);
+      return [...image.matchAll(/rgba?\((?<channels>[\d., ]+)\)/gu)].map(
+        (m) => {
+          const [r = 0, g = 0, b = 0, alpha = 1] = (m.groups?.channels ?? "")
+            .split(",")
+            .map(Number);
+          return [r, g, b, alpha];
+        }
+      );
     },
     { nth, selector }
   );

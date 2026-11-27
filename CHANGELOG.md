@@ -2,9 +2,9 @@
 
 ## 1.0.0
 
-First stable release, in preparation: `1.0.0-alpha.2` is on npm. The package is now **`videolighting`** (it was `videolight` up to `0.1.0-alpha`).
+First stable release, in preparation: `1.0.0-alpha.3` is on npm. The package is now **`videolighting`** (it was `videolight` up to `0.1.0-alpha`).
 
-Between `1.0.0-alpha.1` and `1.0.0-alpha.2`, the `variant` option and the shape of `Colors` changed (see the last points of the list below).
+Between `1.0.0-alpha.1` and `1.0.0-alpha.2`, the `variant` option and the shape of `Colors` changed (see the last points of the list below). Between `1.0.0-alpha.2` and `1.0.0-alpha.3`, the `--vl-radius` variable was removed: the halo reads its corner radius from the page.
 
 ### Migrating from `videolight@0.1.0-alpha`
 
@@ -34,3 +34,4 @@ Removed from the public API (now internal): `createGlow`, `Glow`, `watchVideo`, 
   - `theme`: `"natural"` replaces the read option `vibrant: false`, which is removed.
 - `Colors` (`watch`, `useColors`, `useColorsEvent`) is now `{ natural: { primary, secondary }, vibrant: { primary, secondary }, mean }` instead of `{ primary, secondary, mean }`.
 - The halo's corners follow the video's rounded shape: the glow fades from the rounded edge, not from the bounding box. Each corner is the color of the frame's own corner, and the bands start and end on it. Each corner's radius comes from the video's `border-radius`, or else from the first ancestor that clips it to a rounded shape, and is read again when that element is resized or ends a transition. The `--vl-radius` variable of the alphas is gone: there is nothing to set.
+- The halo paints each color as a light: its brightest shade, as opaque as the color is bright. Over a dark page nothing changes; over a light page a dark edge leaves a light tint instead of a dark shadow. The same rendering serves light and dark themes, with nothing to set.
