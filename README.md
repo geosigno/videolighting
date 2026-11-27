@@ -105,6 +105,10 @@ The halo is redrawn on every frame that is read, with no smoothing. If the user 
 motion, it is redrawn at most once a second. For a reach that isn't in px, set `--vl-reach` in CSS
 instead (see the [CSS reference](#css-reference)).
 
+Each color is painted as a light: the darker it is, the more transparent. A dark edge gives a faint
+glow on a dark page, and on a light page it leaves a light tint instead of a shadow. Nothing to set
+for a light or a dark theme.
+
 The halo's corners follow the rounded shape you see: the video's own `border-radius`, or else that
 of the first ancestor that clips it to a rounded shape (`overflow` other than `visible`). There is
 nothing to set.
