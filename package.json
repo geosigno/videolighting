@@ -1,6 +1,6 @@
 {
   "name": "videolighting",
-  "version": "1.0.0-alpha.3",
+  "version": "1.0.0-alpha.4",
   "description": "Read the colors along the edges of a <video> and use them: halo, ambient background, theme variables.",
   "keywords": [
     "video",

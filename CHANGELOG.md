@@ -2,7 +2,7 @@
 
 ## 1.0.0
 
-First stable release, in preparation: `1.0.0-alpha.3` is on npm. The package is now **`videolighting`** (it was `videolight` up to `0.1.0-alpha`).
+First stable release, in preparation: `1.0.0-alpha.4` is on npm. The package is now **`videolighting`** (it was `videolight` up to `0.1.0-alpha`).
 
 Between `1.0.0-alpha.1` and `1.0.0-alpha.2`, the `variant` option and the shape of `Colors` changed (see the last points of the list below). Between `1.0.0-alpha.2` and `1.0.0-alpha.3`, the `--vl-radius` variable was removed: the halo reads its corner radius from the page.
 
