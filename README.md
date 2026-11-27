@@ -105,6 +105,10 @@ The halo is redrawn on every frame that is read, with no smoothing. If the user 
 motion, it is redrawn at most once a second. For a reach that isn't in px, set `--vl-reach` in CSS
 instead (see the [CSS reference](#css-reference)).
 
+The halo's corners follow the rounded shape you see: the video's own `border-radius`, or else that
+of the first ancestor that clips it to a rounded shape (`overflow` other than `visible`). There is
+nothing to set.
+
 ### Ambient
 
 A background in the video's colors.
@@ -284,7 +288,6 @@ start after mount.
 | `--video-primary`, `--video-secondary` | the element `theme` applies to | Colors that white text is readable on, ready to use as a `background`. |
 | `--vl-reach`, `--vl-opacity` | the halo layer | Reach and opacity of the halo. The `reach` and `opacity` options set them on the layer itself, which wins over a value set higher up. Set them on a parent when you need a length that isn't in px, such as `calc()`, `%` or `vw`. |
 | `--vl-blur` | the halo layer | Radius of the blur of the `"natural"` halo. The `blur` option sets it on the layer. |
-| `--vl-radius` | the halo layer | The video's corner radius, as any CSS length. The halo's corners follow this rounded shape. It is read once from the video's `border-radius`, or else from its element's, so you only need to set it when the rounding is somewhere else (a wrapper with `overflow: hidden`, for example) or isn't in px. With a pill shape, where the radius is half the side or more, a step shows in the middle of the side. |
 | `--vl-primary`, `--vl-secondary`, `--vl-mean` | the ambient layer | The colors of the blobs of the `"vibrant"` ambient. |
 
 Each layer is a `div` with `data-vl="halo"` or `data-vl="ambient"`, `aria-hidden="true"`,
