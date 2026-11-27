@@ -53,6 +53,63 @@ test.describe("poster", () => {
     expectColor(edges.top.at(-1) ?? [], BLUE);
   });
 
+  test("a player's poster counts when something names it one, and is never guessed", async ({
+    page,
+  }) => {
+    await open(page, { effects: [] });
+    const found = await page.evaluate(
+      async (poster) => {
+        const { glowApi } = window;
+        if (!glowApi) {
+          throw new Error("no glowApi");
+        }
+        /** A player around a video with no `poster` of its own: the first colors read, if any. */
+        const read = async (markup: string) => {
+          const player = document.createElement("div");
+          player.innerHTML = markup;
+          document.body.append(player);
+          const video = player.querySelector("video");
+          if (!video) {
+            throw new Error("no video");
+          }
+          const watcher = glowApi.watch(video);
+          const first = await new Promise<number[] | undefined>((resolve) => {
+            watcher.onSample((sampled) => resolve(sampled.top[0]));
+            setTimeout(resolve, 800);
+          });
+          watcher.destroy();
+          player.remove();
+          return first?.map(Math.round);
+        };
+        const media = '<video preload="none"></video>';
+        return {
+          // As a player element takes it: `<video-player poster>`.
+          onThePlayer: await read(
+            `<x-player poster="${poster}"><div>${media}</div></x-player>`
+          ),
+          // As the page gives its own image to a player.
+          slottedImage: await read(
+            `${media}<img slot="poster" src="${poster}">`
+          ),
+          slottedPicture: await read(
+            `${media}<picture slot="poster"><img src="${poster}"></picture>`
+          ),
+          // Laid over the video, but nothing says it is its poster.
+          unnamedImage: await read(
+            `${media}<img src="${poster}" style="position:absolute;inset:0">`
+          ),
+        };
+      },
+      await posterUrl(page)
+    );
+    expect(found).toEqual({
+      onThePlayer: RED,
+      slottedImage: RED,
+      slottedPicture: RED,
+      unnamedImage: undefined,
+    });
+  });
+
   test("the vibrant primary is the most vivid color of the picture, the natural one the dominant color of its edges", async ({
     page,
   }) => {
