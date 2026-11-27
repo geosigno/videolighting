@@ -13,7 +13,7 @@ import type { EdgeColors, Rgb } from "./sample.js";
  *    same color, so nothing turns around a corner.
  * The fade is what makes it "strong at the edge, gone further away": it is an
  * explicit curve (`falloffAlpha`), not a by-product of a blur. It is measured
- * from the rounded shape, so `--vl-radius` (the video's border radius) matters.
+ * from the rounded shape, so each corner's radius matters (see `RADIUS`).
  */
 
 const SIDES = ["top", "right", "bottom", "left"] as const;
@@ -27,8 +27,18 @@ const BLACK: Rgb = [0, 0, 0];
 /** Tunables, as CSS variables with a fallback. */
 const REACH = "var(--vl-reach, 140px)";
 const OPACITY = "var(--vl-opacity, 0.85)";
-/** The video's corner radius, clamped as the browser clamps a `border-radius`. */
-const RADIUS = "min(var(--vl-radius, 0px), 50cqmin)";
+/**
+ * A corner's radius: the one `halo` measured for that corner, clamped as the
+ * browser clamps a `border-radius`.
+ */
+const radius = (corner: string) =>
+  `min(var(--vl-radius-${corner}, 0px), 50cqmin)`;
+const RADIUS: Record<Corner, string> = {
+  bottomLeft: radius("bottom-left"),
+  bottomRight: radius("bottom-right"),
+  topLeft: radius("top-left"),
+  topRight: radius("top-right"),
+};
 
 /** How the intensity decays: (1 - distance) ^ exponent. */
 const DEFAULT_EXPONENT = 2.5;
@@ -106,7 +116,7 @@ const PATCH: Record<Corner, string> = {
 
 /**
  * The bands cover the straight parts of the edges: they start where the arcs
- * do (`--vl-radius` in from each end). The top and bottom bands also run under
+ * do (a corner's radius in from each end). The top and bottom bands also run under
  * the video, over half its height (more than any corner radius): with the
  * radius known that part is hidden by the video, and with no radius known a
  * rounded video shows the glow, not a hole, in its corners. The side bands stop
@@ -118,20 +128,20 @@ function bandPosition(side: Side, inset: string): string {
   const outside = `calc(-1 * ${REACH})`;
   switch (side) {
     case "top":
-      return `left:${RADIUS};right:${RADIUS};top:${outside};height:${deep}`;
+      return `left:${RADIUS.topLeft};right:${RADIUS.topRight};top:${outside};height:${deep}`;
     case "bottom":
-      return `left:${RADIUS};right:${RADIUS};bottom:${outside};height:${deep}`;
+      return `left:${RADIUS.bottomLeft};right:${RADIUS.bottomRight};bottom:${outside};height:${deep}`;
     case "left":
-      return `top:${RADIUS};bottom:${RADIUS};left:${outside};width:${depth}`;
+      return `top:${RADIUS.topLeft};bottom:${RADIUS.bottomLeft};left:${outside};width:${depth}`;
     default:
-      return `top:${RADIUS};bottom:${RADIUS};right:${outside};width:${depth}`;
+      return `top:${RADIUS.topRight};bottom:${RADIUS.bottomRight};right:${outside};width:${depth}`;
   }
 }
 
 /** Patches reach past the video's corner by `--vl-reach`, and cover the arc's square. */
 function cornerPosition(corner: Corner): string {
   const outside = `calc(-1 * ${REACH})`;
-  const size = `width:calc(${REACH} + ${RADIUS});height:calc(${REACH} + ${RADIUS})`;
+  const size = `width:calc(${REACH} + ${RADIUS[corner]});height:calc(${REACH} + ${RADIUS[corner]})`;
   switch (corner) {
     case "topLeft":
       return `left:${outside};top:${outside};${size}`;
@@ -173,7 +183,7 @@ function cornerMask(corner: Corner, curve: Curve, steps: number): string {
     const distance = step / steps;
     const alpha = curve(distance).toFixed(4);
     stops.push(
-      `rgb(0 0 0 / calc(${OPACITY} * ${alpha})) calc(${RADIUS} + ${REACH} * ${distance.toFixed(3)})`
+      `rgb(0 0 0 / calc(${OPACITY} * ${alpha})) calc(${RADIUS[corner]} + ${REACH} * ${distance.toFixed(3)})`
     );
   }
   return `radial-gradient(circle at ${PATCH[corner]}, ${stops.join(", ")})`;

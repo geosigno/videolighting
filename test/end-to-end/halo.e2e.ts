@@ -109,44 +109,103 @@ test.describe("halo", () => {
     ]);
   });
 
-  test("corners follow the video's radius, unless the page sets --vl-radius", async ({
-    page,
-  }) => {
+  test("corners follow the rounded shape the eye sees", async ({ page }) => {
     await open(page, { effects: [] });
-    const found = await page.evaluate(() => {
+    const found = await page.evaluate(async () => {
+      // The video, the two elements around it, and the halo's element above them.
       const video = document.querySelector<HTMLVideoElement>(
         '[data-testid="video"]'
       );
-      const host = video?.parentElement;
-      if (!(video && host && window.glowApi)) {
+      const wrapper = video?.parentElement;
+      const outer = wrapper?.parentElement;
+      const host = outer?.parentElement;
+      const api = window.glowApi;
+      if (!(video && wrapper && outer && host && api)) {
         return;
       }
-      /** Mount a halo, read what it knows of the radius and where its top band starts. */
-      const mount = () => {
-        const stop = window.glowApi?.halo(video, host);
+      const shape = (
+        element: HTMLElement,
+        overflow: string,
+        radius: string
+      ) => {
+        element.style.overflow = overflow;
+        element.style.borderRadius = radius;
+      };
+      /** Start a halo and let it measure: the radii come with the first resize observation. */
+      const start = async () => {
+        const stop = api.halo(video, host);
+        await new Promise((done) =>
+          requestAnimationFrame(() => requestAnimationFrame(done))
+        );
+        return stop;
+      };
+      /** The four radii the halo measured, then where its top band starts and ends. */
+      const read = () => {
         const layer = host.querySelector<HTMLElement>('[data-vl="halo"]');
         const top = layer?.children[0]?.getBoundingClientRect();
         const box = layer?.getBoundingClientRect();
-        const read = {
-          inset: Math.round((top?.left ?? 0) - (box?.left ?? 0)),
-          variable: layer?.style.getPropertyValue("--vl-radius"),
-        };
-        stop?.();
-        return read;
+        return [
+          ...["top-left", "top-right", "bottom-right", "bottom-left"].map(
+            (corner) => layer?.style.getPropertyValue(`--vl-radius-${corner}`)
+          ),
+          Math.round((top?.left ?? 0) - (box?.left ?? 0)),
+          Math.round((box?.right ?? 0) - (top?.right ?? 0)),
+        ].join(" ");
       };
-      host.style.borderRadius = "0px";
-      video.style.borderRadius = "0px";
-      const square = mount();
-      video.style.borderRadius = "24px";
-      const rounded = mount();
-      host.style.setProperty("--vl-radius", "10px");
-      const set = mount();
-      return { rounded, set, square };
+      const once = async () => {
+        const stop = await start();
+        const seen = read();
+        stop();
+        return seen;
+      };
+
+      shape(outer, "visible", "0px");
+      shape(wrapper, "hidden", "0px");
+      shape(video, "", "24px");
+      const roundedVideo = await once();
+      shape(video, "", "0px");
+      shape(wrapper, "hidden", "32px");
+      const roundedWrapper = await once();
+      shape(wrapper, "hidden", "0px");
+      const squareWrapper = await once();
+      // A player's own square clip inside a rounded card: the card shows.
+      shape(outer, "hidden", "32px");
+      const squareInRounded = await once();
+      shape(outer, "visible", "0px");
+      shape(wrapper, "visible", "32px");
+      const notClipped = await once();
+      // 10% of 480 x 270 is an ellipse of 48 x 27: its smaller radius counts.
+      shape(wrapper, "hidden", "10% 8px 0px 16px");
+      const eachCorner = await once();
+
+      shape(wrapper, "hidden", "32px");
+      wrapper.style.transition = "border-radius 50ms";
+      const stop = await start();
+      const ended = new Promise((done) =>
+        wrapper.addEventListener("transitionend", done, { once: true })
+      );
+      wrapper.style.borderRadius = "100px";
+      await ended;
+      const transitioned = read();
+      stop();
+      return {
+        eachCorner,
+        notClipped,
+        roundedVideo,
+        roundedWrapper,
+        squareInRounded,
+        squareWrapper,
+        transitioned,
+      };
     });
     expect(found).toEqual({
-      rounded: { inset: 24, variable: "24px" },
-      set: { inset: 10, variable: "" },
-      square: { inset: 0, variable: "0px" },
+      eachCorner: "27px 8px 0px 16px 27 8",
+      notClipped: "0px 0px 0px 0px 0 0",
+      roundedVideo: "24px 24px 24px 24px 24 24",
+      roundedWrapper: "32px 32px 32px 32px 32 32",
+      squareInRounded: "32px 32px 32px 32px 32 32",
+      squareWrapper: "0px 0px 0px 0px 0 0",
+      transitioned: "100px 100px 100px 100px 100 100",
     });
   });
 
