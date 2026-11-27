@@ -353,10 +353,32 @@ frame is read.
 
 ### Poster
 
-While the browser shows the `poster`, the colors come from that image, so an effect matches what is
-on screen instead of staying blank until the first frame. The poster is shown until the video is
-first played or seeked, whatever `preload` says. It has to be readable like the video, which means
-same origin or CORS.
+Until the video is first played or seeked, the colors come from the first of these that exists:
+
+1. The `poster` attribute of the `<video>`.
+2. The `poster` attribute of the nearest element around the video that has one, such as a player
+   element: `<video-player poster="…">`.
+3. An image in a `poster` slot next to the video: `<img slot="poster">`, or the `<img>` of a
+   `<picture slot="poster">`.
+4. The video's first frame, once the browser has decoded it. Whether that happens before playback
+   depends on the browser and on `preload`. With `preload="metadata"` some browsers decode no frame,
+   and the effect stays neutral until the video plays.
+
+A poster image is read whatever `preload` says. It has to be readable like the video, which means
+same origin or CORS. If it isn't, nothing is reported and the colors wait for the frames.
+
+Only what is named a poster is read. An image that a player lays over the video with none of these
+marks isn't seen, and the effect uses the first frame, which can differ from the image on screen.
+That is the case of Video.js 10 in React when the poster is only given to the player. Give it to the
+media as well:
+
+```tsx
+<VideoPlayer poster="/poster.jpg">
+  <VideoSkin>
+    <Video src="/video.mp4" poster="/poster.jpg" playsInline />
+  </VideoSkin>
+</VideoPlayer>
+```
 
 ### Reduced motion
 
